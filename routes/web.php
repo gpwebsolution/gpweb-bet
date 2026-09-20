@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Artisan;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-Route::middleware(['auth'])->get('/clear', function() {
+Route::middleware(['auth', 'role:admin'])->post('/clear', function() {
     Artisan::call('optimize:clear');
     return redirect()->to('/admin')->with('success', 'Cache limpo com sucesso');
 });

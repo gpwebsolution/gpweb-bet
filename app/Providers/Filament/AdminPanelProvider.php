@@ -41,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->viteTheme('resources/css/filament.css')
             ->colors([
                 'primary' => Color::Red,
                 'secondary' => Color::Amber,
@@ -50,7 +51,6 @@ class AdminPanelProvider extends PanelProvider
                 'danger' => Color::Rose,
             ])
             ->darkMode(true)
-            ->viteTheme('resources/css/filament.css')
             ->brandName('MarioBET')
             ->brandLogo(fn () => view('filament.brand'))
             ->favicon(asset('assets/images/favicon.png'))

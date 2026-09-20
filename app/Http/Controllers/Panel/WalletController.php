@@ -8,14 +8,15 @@ use App\Models\Game;
 use App\Models\GameSession;
 use App\Models\User;
 use App\Models\Saque;
-use App\Notifications\NewDepositNotification;
 use App\Notifications\NewSaqueNotification;
+use App\Traits\DateFilter;
 use App\Traits\Gateways\EfiTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class WalletController extends Controller
 {
+    use DateFilter;
     /**
      * Display a listing of the resource.
      */
@@ -34,15 +35,7 @@ class WalletController extends Controller
         if ($filterGame !== 'all') {
             $query->where('game_id', (int) $filterGame);
         }
-        if ($searchDate) {
-            $query->whereDate('created_at', $searchDate);
-        } elseif ($filterDate === 'today') {
-            $query->whereDate('created_at', today());
-        } elseif ($filterDate === 'week') {
-            $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-        } elseif ($filterDate === 'month') {
-            $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
-        }
+        $query->applyDateFilter($filterDate, $searchDate);
 
         $sessions = $query->latest()->paginate(10);
         $games = Game::where('active', 1)->get();
@@ -59,15 +52,7 @@ class WalletController extends Controller
         $searchDate = $request->get('search_date', '');
         $query = Saque::whereUserId(auth()->id());
 
-        if ($searchDate) {
-            $query->whereDate('created_at', $searchDate);
-        } elseif ($filter === 'today') {
-            $query->whereDate('created_at', today());
-        } elseif ($filter === 'week') {
-            $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-        } elseif ($filter === 'month') {
-            $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
-        }
+        $query->applyDateFilter($filter, $searchDate);
 
         $saques = $query->latest()->paginate(10);
         return view('panel.wallet.saque', compact(['saques', 'filter', 'searchDate']));
@@ -82,15 +67,7 @@ class WalletController extends Controller
         $searchDate = $request->get('search_date', '');
         $query = EfiPayment::whereUserId(auth()->id());
 
-        if ($searchDate) {
-            $query->whereDate('created_at', $searchDate);
-        } elseif ($filter === 'today') {
-            $query->whereDate('created_at', today());
-        } elseif ($filter === 'week') {
-            $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-        } elseif ($filter === 'month') {
-            $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
-        }
+        $query->applyDateFilter($filter, $searchDate);
 
         $deposits = $query->latest()->paginate(10);
         return view('panel.wallet.deposits', compact(['deposits', 'filter', 'searchDate']));
@@ -117,12 +94,9 @@ class WalletController extends Controller
      */
     public function hideBalance()
     {
-        $hideBalance = auth()->user()->wallet->hide_balance;
-
-        $user = User::find(auth()->id());
-        if(!empty($user)) {
-            $user->wallet()->update(['hide_balance' => $hideBalance == 0 ? 1 : 0]);
-        }
+        $user = auth()->user();
+        $currentValue = $user->wallet->hide_balance ?? 0;
+        $user->wallet()->update(['hide_balance' => $currentValue == 0 ? 1 : 0]);
 
         return back()->with('success', 'Visibilidade alterada com sucesso');
     }
@@ -188,7 +162,7 @@ class WalletController extends Controller
             if($saque) {
                 auth()->user()->wallet->decrement('balance', floatval($request->amount));
 
-                $admins = User::role('admin')->get();
+                $admins = \Helper::getAdminUsers();
                 foreach ($admins as $admin) {
                     $admin->notify(new NewSaqueNotification(auth()->user()->name, $request->amount));
                 }

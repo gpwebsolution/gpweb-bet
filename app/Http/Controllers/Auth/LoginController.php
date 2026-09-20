@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Helpers\Core as Helper;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,7 +25,6 @@ class LoginController extends Controller
 
     /**
      * Create a new controller instance.
-     *
      */
     public function __construct()
     {
@@ -33,14 +33,14 @@ class LoginController extends Controller
 
     /**
      * Signin
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse|void
+     *
+     * @return JsonResponse|void
      */
     public function login(Request $request)
     {
         $rules = [
             'password' => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -50,14 +50,14 @@ class LoginController extends Controller
         }
 
         $checkExistEmail = User::where('email', $request->email)->first();
-        if(empty($checkExistEmail)) {
+        if (empty($checkExistEmail)) {
             return response()->json(['status' => false, 'error' => 'E-mail não existe em nossa base de dados']);
         }
 
-        $params = array(
+        $params = [
             'password' => $request->get('password'),
-            'email' => $request->get('email')
-        );
+            'email' => $request->get('email'),
+        ];
 
         if ($user = Auth::attempt($params, true)) {
             return response()->json([
@@ -73,12 +73,11 @@ class LoginController extends Controller
     /**
      * Log the user out of the application.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function logout(Request $request)
     {
-        if(Auth::check()) {
+        if (Auth::check()) {
             Auth::logout();
         }
 

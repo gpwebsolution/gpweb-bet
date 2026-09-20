@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
-use App\Models\Vip;
+use App\Helpers\CpfHelper;
+use App\Services\VipService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
@@ -13,47 +13,9 @@ class ProfileController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $currentVip = $user->vip;
-        $nextVip = null;
-        $userDeposit = 0;
-        $userBets = 0;
-        $progressDeposit = 0;
-        $progressBets = 0;
+        $vipData = VipService::resolveForUser($user);
 
-        $userDeposit = (float) DB::table('efi_payments')
-            ->where('user_id', $user->id)
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        $userBets = (float) ($user->wallet->total_bet ?? 0);
-
-        if ($currentVip) {
-            $nextVip = Vip::where('active', true)
-                ->where('level', '>', $currentVip->level)
-                ->orderBy('level')
-                ->first();
-        } else {
-            $nextVip = Vip::where('active', true)->orderBy('level')->first();
-        }
-
-        if ($nextVip) {
-            $progressDeposit = $nextVip->min_deposit > 0
-                ? min(100, round(($userDeposit / $nextVip->min_deposit) * 100))
-                : ($nextVip->min_deposit == 0 ? 100 : 0);
-
-            $progressBets = $nextVip->min_bets > 0
-                ? min(100, round(($userBets / $nextVip->min_bets) * 100))
-                : ($nextVip->min_bets == 0 ? 100 : 0);
-        }
-
-        return view('panel.profile.index', compact(
-            'currentVip',
-            'nextVip',
-            'userDeposit',
-            'userBets',
-            'progressDeposit',
-            'progressBets',
-        ));
+        return view('panel.profile.index', $vipData);
     }
 
     public function store(Request $request)
@@ -91,7 +53,7 @@ class ProfileController extends Controller
         }
 
         $cpf = preg_replace('/\D/', '', $request->cpf);
-        if (!self::validateCpf($cpf)) {
+        if (!CpfHelper::validate($cpf)) {
             return back()->with('error', 'CPF inválido. Verifique os dígitos.')->withInput();
         }
 
@@ -121,21 +83,5 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/')->with('success', 'Conta excluída permanentemente.');
-    }
-
-    public static function validateCpf(string $cpf): bool
-    {
-        $cpf = preg_replace('/\D/', '', $cpf);
-        if (strlen($cpf) !== 11) return false;
-        if (preg_match('/^(\d)\1{10}$/', $cpf)) return false;
-        for ($t = 9; $t < 11; $t++) {
-            $d = 0;
-            for ($c = 0; $c < $t; $c++) {
-                $d += $cpf[$c] * (($t + 1) - $c);
-            }
-            $d = ((10 * $d) % 11) % 10;
-            if ($cpf[$c] != $d) return false;
-        }
-        return true;
     }
 }

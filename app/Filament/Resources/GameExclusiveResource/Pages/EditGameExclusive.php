@@ -12,7 +12,7 @@ class EditGameExclusive extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return env('APP_DEMO') ? [] :[
+        return env('APP_DEMO') ? [] : [
             Actions\DeleteAction::make(),
         ];
     }

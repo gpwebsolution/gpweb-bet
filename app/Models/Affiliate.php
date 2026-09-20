@@ -55,7 +55,7 @@ class Affiliate extends Model
         if ($this->model === 'revshare' && $this->revshare_percentage > 0) {
             return floatval($this->revshare_percentage);
         }
-        $setting = \App\Models\Setting::first();
+        $setting = \Helper::getSetting();
         return floatval($setting->affiliate_default_percentage ?? 10);
     }
 }

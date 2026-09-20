@@ -1,5 +1,10 @@
-import Alpine from 'alpinejs';
+import * as bootstrap from 'bootstrap';
 
-window.Alpine = Alpine;
-
-Alpine.start();
+document.addEventListener('DOMContentLoaded', function () {
+    const topNav = document.querySelector('.page__content__navbar');
+    if (topNav) {
+        window.addEventListener('scroll', function () {
+            topNav.classList.toggle('navbar-scrolled', window.scrollY > 10);
+        });
+    }
+});

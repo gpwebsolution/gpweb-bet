@@ -35,8 +35,16 @@ class GameExclusive extends Model
         'influencer_winLength',
         'influencer_loseLength',
         'active',
-        'views'
+        'views',
+        'bet_size_list',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'bet_size_list' => 'array',
+        ];
+    }
 
     public function provider(): BelongsTo
     {

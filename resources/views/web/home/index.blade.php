@@ -23,12 +23,9 @@
 @endsection
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('assets/css/splide-core.min.css') }}">
     <style>
-        #image-carousel .splide__slide { overflow: hidden; }
-        #image-carousel .splide__slide img { width: 100%; height: auto; display: block; }
-        #image-carousel, #splide-soccer { opacity: 0; transition: opacity 0.3s; }
-        #image-carousel.splide--initialized, #splide-soccer.splide--initialized { opacity: 1; }
+        .banner-carousel { opacity: 0; transition: opacity 0.3s; }
+        .banner-carousel.swiper-initialized { opacity: 1; }
     </style>
 @endpush
 
@@ -40,23 +37,20 @@
         <div class="container">
 
             {{-- Banner Carousel --}}
-            <style>#image-carousel { opacity: 0; transition: opacity 0.3s; } #image-carousel.splide--initialized { opacity: 1; }</style>
-            <section id="image-carousel" class="splide" aria-label="Banner">
-                <div class="splide__track">
-                    <div class="splide-banner">
-                        Ganhe 10 rodadas grátis <i class="fa-solid fa-fire ms-2"></i>
-                    </div>
-                    <ul class="splide__list">
-                        @foreach(\App\Models\Banner::where('type', 'carousel')->get() as $banner)
-                            <li class="splide__slide">
-                                <a href="{{ $banner->link }}">
-                                    <img src="{{ asset('storage/'.$banner->image) }}" alt="Banner" loading="lazy" style="max-width:100%;width:100%;height:auto;display:block;">
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
+            <div class="banner-carousel swiper mb-2" style="max-width:1320px;margin:12px auto 0;padding:0 calc(var(--bs-gutter-x, 1.5rem) * 0.5);">
+                <div class="swiper-wrapper">
+                    @foreach(\App\Models\Banner::where('type', 'carousel')->get() as $banner)
+                        <div class="swiper-slide" style="border-radius:16px;overflow:hidden;">
+                            <a href="{{ $banner->link }}">
+                                <img src="{{ asset('storage/'.$banner->image) }}" alt="Banner" loading="lazy" width="1320" height="400" style="width:100%;height:auto;display:block;">
+                            </a>
+                        </div>
+                    @endforeach
                 </div>
-            </section>
+                <div class="banner-next" style="color:#fff;background:rgba(0,0,0,0.4);width:40px;height:40px;border-radius:50%;transition:background 0.3s;"></div>
+                <div class="banner-prev" style="color:#fff;background:rgba(0,0,0,0.4);width:40px;height:40px;border-radius:50%;transition:background 0.3s;"></div>
+                <div class="banner-pagination"></div>
+            </div>
 
             {{-- Search --}}
             <form action="{{ url('/') }}" method="GET" class="mt-2 mb-1">
@@ -71,15 +65,14 @@
             @if(count($gamesExclusives) > 0)
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="fa-regular fa-gamepad-modern" style="color: var(--cor-principal); font-size: 1.5rem;"></i>
+                        <i class="fa-regular fa-gamepad-modern text-accent" style="font-size: 1.5rem;"></i>
                         <h4 class="mb-0 fw-bold">Jogos da Casa</h4>
                     </div>
-                    <a href="{{ url('/games?tab=exclusives') }}" class="text-decoration-none d-flex align-items-center gap-1" style="color: var(--cor-principal);">
+                    <a href="{{ url('/games?tab=exclusives') }}" class="text-decoration-none d-flex align-items-center gap-1 text-accent">
                         Ver todos <i class="fa-regular fa-chevron-right"></i>
                     </a>
                 </div>
 
-                <style>.gamesSwiper { opacity: 0; transition: opacity 0.3s; } .gamesSwiper.swiper-initialized { opacity: 1; }</style>
                 <div class="swiper gamesSwiper mb-5">
                     <div class="swiper-wrapper">
                         @foreach($gamesExclusives as $game)
@@ -87,7 +80,7 @@
                                 <a href="{{ route('web.vgames.show', ['game' => $game->uuid]) }}" class="game-card-link">
                                     <div class="game-card-img-wrapper">
                                         <img src="{{ asset('storage/'.$game->cover) }}" alt="{{ $game->name }}"
-                                             class="game-card-img" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
+                                             class="game-card-img" loading="lazy" width="200" height="267">
                                         <div class="game-card-overlay">
                                             <span class="game-card-play-btn">
                                                 <i class="fa-solid fa-play"></i> Jogar
@@ -109,10 +102,10 @@
             {{-- FAQ --}}
             <div class="d-flex align-items-center justify-content-between mt-3 mb-4">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="fa-light fa-circle-info" style="color: var(--cor-principal); font-size: 1.5rem;"></i>
+                    <i class="fa-light fa-circle-info text-accent" style="font-size: 1.5rem;"></i>
                     <h4 class="mb-0 fw-bold">F.A.Q</h4>
                 </div>
-                <a href="{{ url('como-funciona') }}" class="text-decoration-none d-flex align-items-center gap-1" style="color: var(--cor-principal);">
+                <a href="{{ url('como-funciona') }}" class="text-decoration-none d-flex align-items-center gap-1 text-accent">
                     Saiba mais <i class="fa-regular fa-chevron-right"></i>
                 </a>
             </div>
@@ -125,20 +118,19 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('assets/js/splide.min.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var el = document.getElementById('splide-soccer');
-            if (el) {
-                new Splide('#splide-soccer', {
-                    type: 'loop', drag: 'free', focus: 'center',
-                    autoplay: true, perPage: 3, arrows: false, pagination: false,
-                    breakpoints: { 640: { perPage: 1 } }
-                }).mount();
-            }
-            new Splide('#image-carousel', {
-                arrows: false, pagination: false, type: 'loop', autoplay: true
-            }).mount();
+            new Swiper('.banner-carousel', {
+                loop: true,
+                autoplay: { delay: 5000, disableOnInteraction: false },
+                navigation: { nextEl: '.banner-next', prevEl: '.banner-prev' },
+                pagination: { el: '.banner-pagination', clickable: true },
+                on: {
+                    init: function () {
+                        this.el.classList.add('swiper-initialized');
+                    }
+                }
+            });
 
             new Swiper('.gamesSwiper', {
                 slidesPerView: 2,

@@ -4,6 +4,7 @@ namespace App\Traits\Gateways;
 
 use App\Models\EfiPayment;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Models\Wallet;
 use App\Traits\Affiliates\AffiliateHistoryTrait;
 use Carbon\Carbon;
@@ -18,15 +19,25 @@ trait EfiTrait
     use AffiliateHistoryTrait;
 
     protected static string $baseUrl;
+
     protected static string $gnUrl;
+
     protected static string $oauthUrl;
+
     protected static string $clientId;
+
     protected static string $clientSecret;
+
     protected static string $chavePix;
+
     protected static string $certPath;
+
     protected static string $keyPath;
+
     protected static string $certPassword;
+
     protected static string $accessToken;
+
     protected static bool $isSandbox;
 
     private static function generateCredentials(): bool
@@ -44,14 +55,16 @@ trait EfiTrait
 
         if (empty(self::$clientId) || empty(self::$clientSecret)) {
             \Log::error('EFI: Credenciais vazias');
+
             return false;
         }
 
-        $cacheKey = 'efi_access_token_' . md5(self::$clientId);
+        $cacheKey = 'efi_access_token_'.md5(self::$clientId);
 
         if (Cache::has($cacheKey)) {
             self::$accessToken = Cache::get($cacheKey);
-            return !empty(self::$accessToken);
+
+            return ! empty(self::$accessToken);
         }
 
         try {
@@ -66,18 +79,18 @@ trait EfiTrait
                 $data = json_decode($response->getBody(), true);
                 self::$accessToken = $data['access_token'] ?? '';
 
-                if (!empty(self::$accessToken)) {
+                if (! empty(self::$accessToken)) {
                     $expiresIn = $data['expires_in'] ?? 3600;
                     Cache::put($cacheKey, self::$accessToken, now()->addSeconds($expiresIn - 60));
-                    \Log::info('EFI OAuth: token obtido e cacheado por ' . $expiresIn . 's');
+                    \Log::info('EFI OAuth: token obtido e cacheado por '.$expiresIn.'s');
                 }
 
-                return !empty(self::$accessToken);
+                return ! empty(self::$accessToken);
             }
 
-            \Log::error('EFI OAuth falhou: status ' . $response->getStatusCode() . ' - ' . $response->getBody());
+            \Log::error('EFI OAuth falhou: status '.$response->getStatusCode().' - '.$response->getBody());
         } catch (\Exception $e) {
-            \Log::error('EFI OAuth Error: ' . $e->getMessage());
+            \Log::error('EFI OAuth Error: '.$e->getMessage());
         }
 
         return false;
@@ -87,8 +100,8 @@ trait EfiTrait
     {
         $headers = ['Content-Type' => 'application/json'];
 
-        if ($withToken && !empty(self::$accessToken)) {
-            $headers['Authorization'] = 'Bearer ' . self::$accessToken;
+        if ($withToken && ! empty(self::$accessToken)) {
+            $headers['Authorization'] = 'Bearer '.self::$accessToken;
             $headers['x-api-version'] = '2';
         }
 
@@ -110,8 +123,8 @@ trait EfiTrait
         $setting = \Helper::getSetting();
 
         $rules = [
-            'amount' => ['required', 'numeric', 'min:' . ($setting->min_deposit ?? 1)],
-            'cpf'    => ['required', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:'.($setting->min_deposit ?? 1)],
+            'cpf' => ['required', 'max:255'],
         ];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -119,10 +132,10 @@ trait EfiTrait
         }
 
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return ['status' => false, 'error' => 'Usuário não autenticado'];
         }
-        if (!self::generateCredentials()) {
+        if (! self::generateCredentials()) {
             return ['status' => false, 'error' => 'Erro na autenticação com o gateway.'];
         }
 
@@ -135,18 +148,18 @@ trait EfiTrait
                 return ['status' => false, 'error' => 'CPF já confirmado na sua conta. Use o CPF cadastrado.'];
             }
         } else {
-            if (!self::validateCpf($cpf)) {
+            if (! \App\Helpers\CpfHelper::validate($cpf)) {
                 return ['status' => false, 'error' => 'CPF inválido. Verifique os dígitos.'];
             }
 
-            $existing = \App\Models\User::where('cpf', $cpf)->where('id', '!=', $user->id)->exists();
+            $existing = User::where('cpf', $cpf)->where('id', '!=', $user->id)->exists();
             if ($existing) {
                 return ['status' => false, 'error' => 'Este CPF já está cadastrado em outra conta.'];
             }
 
             $user->update(['cpf' => $cpf, 'cpf_confirmed' => 1]);
         }
-        $paymentId = 'EFI' . time() . random_int(1000, 9999);
+        $paymentId = 'EFI'.time().random_int(1000, 9999);
         $txid = strtoupper(substr(md5(uniqid('', true)), 0, 35));
 
         try {
@@ -160,10 +173,10 @@ trait EfiTrait
                 ],
                 'valor' => ['original' => number_format($amount, 2, '.', '')],
                 'chave' => self::$chavePix,
-                'solicitacaoPagador' => 'Depósito ' . $user->name,
+                'solicitacaoPagador' => 'Depósito '.$user->name,
             ];
 
-            $response = $client->put(self::$baseUrl . 'cob/' . $txid, [
+            $response = $client->put(self::$baseUrl.'cob/'.$txid, [
                 'json' => $payload,
             ]);
 
@@ -176,7 +189,7 @@ trait EfiTrait
                 $locId = $data['loc']['id'] ?? null;
                 if ($locId) {
                     try {
-                        $qrResp = $client->get(self::$baseUrl . 'loc/' . $locId . '/qrcode');
+                        $qrResp = $client->get(self::$baseUrl.'loc/'.$locId.'/qrcode');
                         if ($qrResp->getStatusCode() === 200) {
                             $qrData = json_decode($qrResp->getBody(), true);
                             $qrcode = $qrData['qrcode'] ?? $pixCopyPaste;
@@ -216,10 +229,12 @@ trait EfiTrait
             }
 
             $body = $response->getBody()->getContents();
-            \Log::error('EFI cobrança falhou: ' . $body);
+            \Log::error('EFI cobrança falhou: '.$body);
+
             return ['status' => false, 'error' => 'Erro ao gerar QR Code no gateway.'];
         } catch (\Exception $e) {
-            \Log::error('EFI requestQrcode: ' . $e->getMessage());
+            \Log::error('EFI requestQrcode: '.$e->getMessage());
+
             return ['status' => false, 'error' => 'Erro ao comunicar com o gateway.'];
         }
     }
@@ -230,22 +245,24 @@ trait EfiTrait
             ->where('status', 'pending')
             ->first();
 
-        if (!$payment) {
+        if (! $payment) {
             return response()->json(['status' => 'PAID']);
         }
 
         if ($payment->expires_at && Carbon::now()->greaterThan($payment->expires_at)) {
             $payment->update(['status' => 'expired']);
+            Cache::put('payment_status_' . $payment->id, 'expired', 600);
+
             return response()->json(['status' => 'EXPIRED']);
         }
 
-        if (!self::generateCredentials()) {
+        if (! self::generateCredentials()) {
             return response()->json(['status' => 'ERROR']);
         }
 
         try {
             $client = self::getCertClient();
-            $response = $client->get(self::$baseUrl . 'cob/' . $payment->txid);
+            $response = $client->get(self::$baseUrl.'cob/'.$payment->txid);
 
             $payment->update(['last_efi_checked_at' => Carbon::now()]);
 
@@ -257,6 +274,7 @@ trait EfiTrait
                     if (self::finalizePayment($payment)) {
                         return response()->json(['status' => 'PAID']);
                     }
+
                     return response()->json(['status' => 'ERROR']);
                 }
 
@@ -265,7 +283,8 @@ trait EfiTrait
 
             return response()->json(['status' => 'PENDING']);
         } catch (\Exception $e) {
-            \Log::error('EFI consultStatus: ' . $e->getMessage());
+            \Log::error('EFI consultStatus: '.$e->getMessage());
+
             return response()->json(['status' => 'PENDING']);
         }
     }
@@ -280,54 +299,61 @@ trait EfiTrait
         header('Connection: keep-alive');
         header('X-Accel-Buffering: no');
 
-        $maxDuration = 3600;
+        $maxDuration = 300;
         $startTime = time();
+        $cacheKey = 'payment_status_' . $payment->id;
 
         while (time() - $startTime < $maxDuration) {
-            $fresh = EfiPayment::find($payment->id);
+            $status = Cache::get($cacheKey);
 
-            if (!$fresh || $fresh->status === 'paid') {
-                echo "event: paid\n";
-                echo "data: " . json_encode(['status' => 'PAID']) . "\n\n";
-                flush();
-                return;
-            }
+            if ($status === null) {
+                $fresh = EfiPayment::find($payment->id);
 
-            if ($fresh->status === 'expired') {
-                echo "event: expired\n";
-                echo "data: " . json_encode(['status' => 'EXPIRED']) . "\n\n";
-                flush();
-                return;
+                if (! $fresh || $fresh->status === 'paid') {
+                    Cache::put($cacheKey, 'paid', 600);
+                    echo "event: paid\n";
+                    echo 'data: '.json_encode(['status' => 'PAID'])."\n\n";
+                    flush();
+                    return;
+                }
+
+                if ($fresh->status === 'expired') {
+                    Cache::put($cacheKey, 'expired', 600);
+                    echo "event: expired\n";
+                    echo 'data: '.json_encode(['status' => 'EXPIRED'])."\n\n";
+                    flush();
+                    return;
+                }
+
+                $canCheck = ! $fresh->last_efi_checked_at ||
+                    Carbon::now()->diffInSeconds($fresh->last_efi_checked_at) >= 15;
+
+                if ($canCheck) {
+                    self::consultEfiStatus($fresh);
+                }
             }
 
             echo "event: ping\n";
-            echo "data: " . json_encode(['status' => 'PENDING']) . "\n\n";
+            echo 'data: '.json_encode(['status' => 'PENDING'])."\n\n";
             flush();
 
-            $canCheck = !$fresh->last_efi_checked_at ||
-                Carbon::now()->diffInSeconds($fresh->last_efi_checked_at) >= 15;
-
-            if ($canCheck) {
-                self::consultEfiStatus($fresh);
-            }
-
-            sleep(3);
+            sleep(10);
         }
 
         echo "event: timeout\n";
-        echo "data: " . json_encode(['status' => 'TIMEOUT']) . "\n\n";
+        echo 'data: '.json_encode(['status' => 'TIMEOUT'])."\n\n";
         flush();
     }
 
     private static function consultEfiStatus(EfiPayment $payment): void
     {
         try {
-            if (!self::generateCredentials()) {
+            if (! self::generateCredentials()) {
                 return;
             }
 
             $client = self::getCertClient();
-            $response = $client->get(self::$baseUrl . 'cob/' . $payment->txid);
+            $response = $client->get(self::$baseUrl.'cob/'.$payment->txid);
 
             $payment->update(['last_efi_checked_at' => Carbon::now()]);
 
@@ -338,7 +364,7 @@ trait EfiTrait
                 }
             }
         } catch (\Exception $e) {
-            \Log::error('EFI consultEfiStatus: ' . $e->getMessage());
+            \Log::error('EFI consultEfiStatus: '.$e->getMessage());
         }
     }
 
@@ -350,9 +376,9 @@ trait EfiTrait
 
         $setting = \Helper::getSetting();
 
-        if (!empty($transaction)) {
-            $wallet = Wallet::where('user_id', $transaction->user_id)->first();
-            if (!empty($wallet)) {
+        if (! empty($transaction)) {
+            $wallet = $transaction->user?->wallet ?? Wallet::where('user_id', $transaction->user_id)->first();
+            if (! empty($wallet)) {
                 $count = Transaction::where('user_id', $transaction->user_id)->count();
                 if ($count <= 1 && ($setting->initial_bonus ?? 0) > 0) {
                     $bonus = \Helper::porcentagem_xn($setting->initial_bonus, $transaction->price);
@@ -362,17 +388,21 @@ trait EfiTrait
                 if ($wallet->increment('balance', $transaction->price)) {
                     if ($transaction->update(['status' => 1])) {
                         $payment->update(['status' => 'paid', 'paid_at' => Carbon::now()]);
+                        Cache::put('payment_status_' . $payment->id, 'paid', 600);
                         self::updateAffiliate($transaction->payment_id, $transaction->user_id, $transaction->price);
+
                         return true;
                     }
                 }
             }
+
             return false;
         }
 
         $active = Transaction::where('payment_id', $payment->payment_id)->where('status', 1)->first();
         if ($active) {
             $payment->update(['status' => 'paid', 'paid_at' => Carbon::now()]);
+
             return true;
         }
 
@@ -395,8 +425,9 @@ trait EfiTrait
     {
         $result = ['status' => false, 'error' => ''];
 
-        if (!self::generateCredentials()) {
+        if (! self::generateCredentials()) {
             $result['error'] = 'Erro na autenticação com o gateway.';
+
             return $result;
         }
 
@@ -415,7 +446,7 @@ trait EfiTrait
                 ],
             ];
 
-            $response = $client->post(self::$gnUrl . 'pix', [
+            $response = $client->post(self::$gnUrl.'pix', [
                 'json' => $payload,
                 'headers' => [
                     'x-idempotency-key' => $idempotencyKey,
@@ -438,21 +469,25 @@ trait EfiTrait
                     $result['status'] = true;
                     $result['endToEndId'] = $endToEndId;
                     $result['txid'] = $data['txid'] ?? $idempotencyKey;
+
                     return $result;
                 }
 
-                $result['error'] = 'Status inesperado: ' . $status;
-                \Log::error('EFI pixCashOut status inesperado: ' . json_encode($data));
+                $result['error'] = 'Status inesperado: '.$status;
+                \Log::error('EFI pixCashOut status inesperado: '.json_encode($data));
+
                 return $result;
             }
 
             $body = $response->getBody()->getContents();
-            \Log::error('EFI pixCashOut falhou: status ' . $response->getStatusCode() . ' - ' . $body);
+            \Log::error('EFI pixCashOut falhou: status '.$response->getStatusCode().' - '.$body);
             $result['error'] = 'Erro ao processar Pix no gateway.';
+
             return $result;
         } catch (\Exception $e) {
-            \Log::error('EFI pixCashOut: ' . $e->getMessage());
-            $result['error'] = 'Erro ao comunicar com o gateway: ' . $e->getMessage();
+            \Log::error('EFI pixCashOut: '.$e->getMessage());
+            $result['error'] = 'Erro ao comunicar com o gateway: '.$e->getMessage();
+
             return $result;
         }
     }
@@ -461,15 +496,16 @@ trait EfiTrait
     {
         $result = ['status' => false, 'error' => ''];
 
-        if (!self::generateCredentials()) {
+        if (! self::generateCredentials()) {
             $result['error'] = 'Erro na autenticação com o gateway.';
+
             return $result;
         }
 
         try {
             $client = self::getCertClient();
 
-            $response = $client->put(self::$baseUrl . 'pix/' . $e2eId . '/devolucao/' . $txid, [
+            $response = $client->put(self::$baseUrl.'pix/'.$e2eId.'/devolucao/'.$txid, [
                 'json' => [
                     'valor' => number_format($amount, 2, '.', ''),
                 ],
@@ -479,16 +515,19 @@ trait EfiTrait
                 $data = json_decode($response->getBody(), true);
                 $result['status'] = true;
                 $result['data'] = $data;
+
                 return $result;
             }
 
             $body = $response->getBody()->getContents();
-            \Log::error('EFI pixDevolution falhou: ' . $body);
+            \Log::error('EFI pixDevolution falhou: '.$body);
             $result['error'] = 'Erro ao realizar devolução Pix.';
+
             return $result;
         } catch (\Exception $e) {
-            \Log::error('EFI pixDevolution: ' . $e->getMessage());
+            \Log::error('EFI pixDevolution: '.$e->getMessage());
             $result['error'] = 'Erro ao comunicar com o gateway.';
+
             return $result;
         }
     }
@@ -497,7 +536,7 @@ trait EfiTrait
     {
         $result = ['status' => false, 'data' => []];
 
-        if (!self::generateCredentials()) {
+        if (! self::generateCredentials()) {
             return $result;
         }
 
@@ -505,18 +544,20 @@ trait EfiTrait
             $client = self::getCertClient();
             $query = http_build_query($filters);
 
-            $response = $client->get(self::$gnUrl . 'pix' . ($query ? '?' . $query : ''));
+            $response = $client->get(self::$gnUrl.'pix'.($query ? '?'.$query : ''));
 
             if ($response->getStatusCode() === 200) {
                 $data = json_decode($response->getBody(), true);
                 $result['status'] = true;
                 $result['data'] = $data;
+
                 return $result;
             }
 
             return $result;
         } catch (\Exception $e) {
-            \Log::error('EFI listPixTransfers: ' . $e->getMessage());
+            \Log::error('EFI listPixTransfers: '.$e->getMessage());
+
             return $result;
         }
     }
@@ -525,15 +566,16 @@ trait EfiTrait
     {
         $result = ['status' => false, 'error' => ''];
 
-        if (!self::generateCredentials()) {
+        if (! self::generateCredentials()) {
             $result['error'] = 'Erro na autenticação com o gateway.';
+
             return $result;
         }
 
         try {
             $client = self::getCertClient();
 
-            $response = $client->patch(self::$baseUrl . 'cob/' . $txid, [
+            $response = $client->patch(self::$baseUrl.'cob/'.$txid, [
                 'json' => [
                     'status' => 'REMOVIDA_PELO_USUARIO_RECEBEDOR',
                 ],
@@ -547,16 +589,19 @@ trait EfiTrait
                 EfiPayment::where('txid', $txid)->update(['status' => 'cancelled']);
 
                 \Log::info('EFI cobrança cancelada', ['txid' => $txid]);
+
                 return $result;
             }
 
             $body = $response->getBody()->getContents();
-            \Log::error('EFI cancelar cobrança falhou: ' . $body);
+            \Log::error('EFI cancelar cobrança falhou: '.$body);
             $result['error'] = 'Erro ao cancelar cobrança no gateway.';
+
             return $result;
         } catch (\Exception $e) {
-            \Log::error('EFI cancelPixCharge: ' . $e->getMessage());
+            \Log::error('EFI cancelPixCharge: '.$e->getMessage());
             $result['error'] = 'Erro ao comunicar com o gateway.';
+
             return $result;
         }
     }
@@ -582,33 +627,8 @@ trait EfiTrait
             return true;
         }
 
-        \Log::warning('EFI Webhook: IP não autorizado tentou acessar: ' . $clientIp);
+        \Log::warning('EFI Webhook: IP não autorizado tentou acessar: '.$clientIp);
+
         return false;
-    }
-
-    private static function validateCpf(string $cpf): bool
-    {
-        $cpf = preg_replace('/\D/', '', $cpf);
-
-        if (strlen($cpf) !== 11) {
-            return false;
-        }
-
-        if (preg_match('/^(\d)\1{10}$/', $cpf)) {
-            return false;
-        }
-
-        for ($t = 9; $t < 11; $t++) {
-            $d = 0;
-            for ($c = 0; $c < $t; $c++) {
-                $d += $cpf[$c] * (($t + 1) - $c);
-            }
-            $d = ((10 * $d) % 11) % 10;
-            if ((int) $cpf[$c] !== $d) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

@@ -7,5 +7,5 @@ Route::prefix('affiliates')
     ->as('affiliates.')
     ->group(function () {
         Route::get('/', [AffiliateController::class, 'index'])->name('index');
-        Route::post('/saque', [AffiliateController::class, 'getSaque'])->name('saque');
+        Route::post('/saque', [AffiliateController::class, 'getSaque'])->name('saque')->middleware('throttle:financial');
     });

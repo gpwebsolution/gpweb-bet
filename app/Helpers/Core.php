@@ -5,7 +5,7 @@ namespace App\Helpers;
 use App\Models\GameSession;
 use App\Models\Setting;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Services\GameTokenService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,24 +14,28 @@ class Core
 {
     public static function createController(string $controllerName)
     {
-        $fullControllerName = 'App\Http\Controllers\Games\\' . ucfirst($controllerName) . 'Controller';
+        $fullControllerName = 'App\Http\Controllers\Games\\'.ucfirst($controllerName).'Controller';
 
         if (class_exists($fullControllerName)) {
-            return new $fullControllerName();
+            return new $fullControllerName;
         }
 
-        throw new \Exception('Controller não encontrado: ' . $fullControllerName);
+        throw new \Exception('Controller não encontrado: '.$fullControllerName);
     }
 
-    public static function generateGameHistory(User $user, string $type, float $amount, float $bet, string $nameGame, string $gameId, bool $changeBonus = false, string $provider = 'originals')
+    public static function generateGameHistory(User $user, string $type, float $amount, float $bet, string $nameGame, string $gameId, string $changeBonus = 'balance', string $provider = 'originals')
     {
         return GameSession::create([
             'user_id' => $user->id,
-            'game_id' => 0,
+            'game_id' => null,
+            'game_name' => $nameGame,
+            'game_uuid' => $gameId,
             'bet_amount' => $type == 'loss' ? $bet : $amount,
             'result_amount' => $type == 'loss' ? 0 : $amount,
             'profit' => $type == 'loss' ? -$bet : ($amount - $bet),
             'type' => $type,
+            'provider' => $provider,
+            'balance_source' => $changeBonus,
             'round_id' => Str::random(40),
         ]);
     }
@@ -80,10 +84,23 @@ class Core
         ];
     }
 
+    public static function getAdminUsers()
+    {
+        if (Cache::has('admin_users')) {
+            return Cache::get('admin_users');
+        }
+
+        $admins = User::role('admin')->get();
+        Cache::put('admin_users', $admins, 300);
+
+        return $admins;
+    }
+
     public static function amountFormatDecimal($value)
     {
         $decimals = $value == floor($value) ? 0 : 2;
-        return 'R$ ' . number_format($value, $decimals, ',', '.');
+
+        return 'R$ '.number_format($value, $decimals, ',', '.');
     }
 
     public static function getToken()
@@ -98,8 +115,14 @@ class Core
     public static function getBalance()
     {
         if (auth()->check()) {
-            $wallet = auth()->user()->wallet;
-            $total = $wallet ? $wallet->balance + $wallet->balance_bonus : 0;
+            $user = auth()->user();
+            if ($user->relationLoaded('wallet') && $user->wallet) {
+                $total = $user->wallet->balance + $user->wallet->balance_bonus;
+            } else {
+                $wallet = $user->wallet;
+                $total = $wallet ? $wallet->balance + $wallet->balance_bonus : 0;
+            }
+
             return self::amountFormatDecimal($total);
         }
 
@@ -108,71 +131,21 @@ class Core
 
     public static function MakeToken(array $array): string
     {
-        $output = '{"status": true';
-        foreach ($array as $key => $value) {
-            $output .= ',"' . $key . '": "' . $value . '"';
-        }
-        $output .= '}';
+        $userId = $array['id'] ?? auth()->id();
+        $gameUuid = $array['game'] ?? '';
 
-        return self::Encode($output);
+        return GameTokenService::make((int) $userId, $gameUuid);
     }
 
     public static function DecToken(string $token)
     {
-        $json = self::Decode($token);
-        if (is_numeric($json)) {
-            return $token;
+        $data = GameTokenService::decode($token);
+
+        if ($data === null) {
+            return ['status' => false, 'message' => 'invalid token'];
         }
 
-        if (self::isJson($json)) {
-            $json = str_replace('{"email', '{"status":true ,"email', $json);
-            return json_decode($json, true);
-        }
-
-        return ['status' => false, 'message' => 'invalid token'];
-    }
-
-    private static function isJson(string $string): bool
-    {
-        json_decode($string);
-        return json_last_error() == JSON_ERROR_NONE;
-    }
-
-    public static function Encode(string $texto): string
-    {
-        $texto = base64_encode($texto);
-        $busca0 = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','x','w','y','z','0','1','2','3','4','5','6','7','8','9','='];
-        $subti0 = ['8','e','9','f','b','d','h','g','j','i','m','o','k','z','l','w','4','s','r','u','t','x','v','p','6','n','7','2','1','5','q','3','y','0','c','a',''];
-
-        $saidaSubs = '';
-        for ($i = 0; $i < strlen($texto); $i++) {
-            $ti = array_search($texto[$i], $busca0);
-            if ($busca0[$ti] == $texto[$i]) {
-                $saidaSubs .= $subti0[$ti];
-            } else {
-                $saidaSubs .= $texto[$i];
-            }
-        }
-
-        return $saidaSubs;
-    }
-
-    public static function Decode(string $texto): string
-    {
-        $busca0 = ['8','e','9','f','b','d','h','g','j','i','m','o','k','z','l','w','4','s','r','u','t','x','v','p','6','n','7','2','1','5','q','3','y','0','c','a'];
-        $subti0 = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','x','w','y','z','0','1','2','3','4','5','6','7','8','9'];
-
-        $saidaSubs = '';
-        for ($i = 0; $i < strlen($texto); $i++) {
-            $ti = array_search($texto[$i], $busca0);
-            if ($busca0[$ti] == $texto[$i]) {
-                $saidaSubs .= $subti0[$ti];
-            } else {
-                $saidaSubs .= $texto[$i];
-            }
-        }
-
-        return base64_decode($saidaSubs);
+        return $data;
     }
 
     public static function porcentagem_xn($porcentagem, $total)
@@ -200,11 +173,11 @@ class Core
     public static function formatNumber($number)
     {
         if ($number >= 1000 && $number < 1000000) {
-            return number_format($number / 1000, 1) . 'k';
+            return number_format($number / 1000, 1).'k';
         }
 
         if ($number >= 1000000) {
-            return number_format($number / 1000000, 1) . 'M';
+            return number_format($number / 1000000, 1).'M';
         }
 
         return $number;

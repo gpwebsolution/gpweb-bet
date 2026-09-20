@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Setting;
+use BackedEnum;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -11,7 +12,6 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use BackedEnum;
 use UnitEnum;
 
 class Settings extends Page
@@ -19,28 +19,51 @@ class Settings extends Page
     protected string $view = 'filament.pages.settings';
 
     public ?string $software_name = null;
+
     public ?string $software_description = null;
+
     public $software_logo_white = [];
+
     public ?string $prefix = null;
+
     public ?string $currency_code = null;
+
     public ?string $decimal_format = null;
+
     public ?string $currency_position = null;
+
     public ?string $storage = null;
+
     public ?string $min_deposit = null;
+
     public ?string $max_deposit = null;
+
     public ?string $min_saque = null;
+
     public ?string $max_saque = null;
+
     public ?string $initial_bonus = null;
+
     public ?string $ngr_percent = null;
+
     public bool $revshare_reverse = false;
+
     public ?string $instagram = null;
+
     public ?string $tiktok = null;
+
     public ?string $whatsapp = null;
+
     public ?string $discord = null;
+
     public ?string $telegram = null;
+
     public ?string $twitter = null;
+
     public ?string $affiliate_default_percentage = null;
+
     public ?string $affiliate_default_cpa = null;
+
     public ?string $affiliate_default_baseline = null;
 
     public function mount(): void
@@ -50,7 +73,7 @@ class Settings extends Page
             $data = $setting->toArray();
             $this->software_name = $data['software_name'] ?? null;
             $this->software_description = $data['software_description'] ?? null;
-            $this->software_logo_white = !empty($data['software_logo_white']) ? [$data['software_logo_white']] : [];
+            $this->software_logo_white = ! empty($data['software_logo_white']) ? [$data['software_logo_white']] : [];
             $this->prefix = $data['prefix'] ?? null;
             $this->currency_code = $data['currency_code'] ?? null;
             $this->decimal_format = $data['decimal_format'] ?? null;
@@ -212,7 +235,7 @@ class Settings extends Page
 
         foreach (['software_logo_white', 'software_logo_black', 'software_favicon'] as $field) {
             if (array_key_exists($field, $data)) {
-                if (is_array($data[$field]) && !empty($data[$field])) {
+                if (is_array($data[$field]) && ! empty($data[$field])) {
                     $data[$field] = $data[$field][0];
                 } elseif (empty($data[$field])) {
                     $data[$field] = $setting->$field ?? null;
@@ -220,7 +243,7 @@ class Settings extends Page
             }
         }
 
-        if (!$setting) {
+        if (! $setting) {
             $setting = Setting::create();
         }
 

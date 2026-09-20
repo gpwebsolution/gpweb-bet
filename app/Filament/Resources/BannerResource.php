@@ -4,18 +4,16 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BannerResource\Pages;
 use App\Models\Banner;
-use BackedEnum;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Storage;
 use UnitEnum;
 
 class BannerResource extends Resource

@@ -15,6 +15,6 @@ Route::prefix('carteira')
         Route::get('/depositar', [WalletController::class, 'viewDepositForm'])->name('deposit_form');
         Route::get('/sacar', [WalletController::class, 'viewSaqueForm'])->name('saque_form');
 
-        Route::post('/deposit', [WalletController::class, 'generateDeposit'])->name('deposit');
-        Route::post('/saque', [WalletController::class, 'requestSaque'])->name('saque');
+        Route::post('/deposit', [WalletController::class, 'generateDeposit'])->name('deposit')->middleware('throttle:financial');
+        Route::post('/saque', [WalletController::class, 'requestSaque'])->name('saque')->middleware('throttle:financial');
     });

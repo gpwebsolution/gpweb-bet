@@ -48,7 +48,7 @@ class UserService
     {
         $prefix = 'MB';
         do {
-            $code = $prefix . strtoupper(Str::random(8));
+            $code = $prefix.strtoupper(Str::random(8));
         } while (User::where('affiliate_code', $code)->exists());
 
         return $code;

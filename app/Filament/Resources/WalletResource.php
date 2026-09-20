@@ -4,15 +4,15 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\WalletResource\Pages;
 use App\Models\Wallet;
-use Filament\Schemas\Components\Section;
+use BackedEnum;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use BackedEnum;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use UnitEnum;
 use Filament\Tables;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class WalletResource extends Resource
 {

@@ -91,7 +91,7 @@
                     </div>
 
                     <div class="card p-4 mb-4">
-                        <h4 class="fw-bold text-white mb-3"><i class="fa-regular fa-circle-question me-2" style="color: var(--cor-principal);"></i>Perguntas Frequentes</h4>
+                        <h4 class="fw-bold text-white mb-3"><i class="fa-regular fa-circle-question me-2 text-accent"></i>Perguntas Frequentes</h4>
                         <div class="accordion" id="suporteFaq">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">

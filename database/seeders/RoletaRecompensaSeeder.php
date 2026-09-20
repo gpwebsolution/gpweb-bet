@@ -20,7 +20,7 @@ class RoletaRecompensaSeeder extends Seeder
         ];
 
         foreach ($rewards as $reward) {
-            DB::table('roleta_recompensas')->insert($reward);
+            DB::table('roleta_recompensas')->insertOrIgnore($reward);
         }
     }
 }

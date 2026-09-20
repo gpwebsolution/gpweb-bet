@@ -1,6 +1,6 @@
 <div class="flex items-center gap-3 px-2 py-3">
     <div class="relative">
-        <img src="{{ $setting?->logoUrl() ?? asset('assets/images/favicon.png') }}"
+        <img src="{{ method_exists($setting, 'logoUrl') ? $setting->logoUrl() : asset('assets/images/logo.svg') ?? asset('assets/images/favicon.png') }}"
              alt="{{ $setting?->software_name ?? 'MarioBET' }}"
              class="h-10 w-10 rounded-xl shadow-lg shadow-casino-red/20 ring-2 ring-casino-gold/20">
         <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-gray-900"></div>

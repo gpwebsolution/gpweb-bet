@@ -5,7 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EfiPaymentResource\Pages;
 use App\Models\EfiPayment;
 use App\Models\Transaction;
-use App\Models\Wallet;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -13,7 +14,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
-use Filament\Actions\Action;
 use Filament\Tables\Table;
 
 class EfiPaymentResource extends Resource
@@ -106,8 +106,8 @@ class EfiPaymentResource extends Resource
                     ->label('Status'),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('created_from')->label('De'),
-                        \Filament\Forms\Components\DatePicker::make('created_until')->label('Até'),
+                        DatePicker::make('created_from')->label('De'),
+                        DatePicker::make('created_until')->label('Até'),
                     ])
                     ->query(fn ($query, array $data) => $query
                         ->when($data['created_from'], fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
@@ -125,10 +125,10 @@ class EfiPaymentResource extends Resource
                     ->action(function (EfiPayment $record) {
                         $record->update(['status' => 'paid', 'paid_at' => now()]);
 
-                        $transaction = Transaction::where('payment_id', $record->payment_id)
+                        $transaction = Transaction::with('user.wallet')->where('payment_id', $record->payment_id)
                             ->where('status', 0)->first();
                         if ($transaction) {
-                            $wallet = Wallet::where('user_id', $transaction->user_id)->first();
+                            $wallet = $transaction->user?->wallet;
                             if ($wallet) {
                                 $wallet->increment('balance', $transaction->price);
                                 $transaction->update(['status' => 1]);

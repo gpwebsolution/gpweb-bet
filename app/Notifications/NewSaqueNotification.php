@@ -24,7 +24,7 @@ class NewSaqueNotification extends Notification
     {
         return [
             'title' => 'Novo Saque',
-            'message' => "{$this->userName} solicitou um saque de R$ " . number_format($this->amount, 2, ',', '.'),
+            'message' => "{$this->userName} solicitou um saque de R$ ".number_format($this->amount, 2, ',', '.'),
         ];
     }
 }

@@ -7,7 +7,7 @@
         </button>
 
         <a class="page__navbar__logo" href="{{ url('/') }}">
-            <img src="{{ $setting?->logoUrl() }}" alt="MarioBET" style="height: 42px;">
+            <img src="{{ method_exists($setting, 'logoUrl') ? $setting->logoUrl() : asset('assets/images/logo.svg') }}" alt="MarioBET" style="height: 42px;">
         </a>
 
     </aside>
@@ -88,8 +88,6 @@
     </aside>
 </nav>
 
-@include('includes.banner')
-
 @include('includes.deposit')
 
 {{-- Login Modal --}}
@@ -102,7 +100,7 @@
                     <form id="loginForm" method="post" action="" class="auth-form">
                         @csrf
                         <div class="text-center mb-4">
-                            <img src="{{ $setting?->logoUrl() }}" alt="MarioBET" style="height: 36px;">
+                            <img src="{{ method_exists($setting, 'logoUrl') ? $setting->logoUrl() : asset('assets/images/logo.svg') }}" alt="MarioBET" style="height: 36px;">
                             <h5 class="fw-bold mt-3 mb-1">Entrar</h5>
                             <p class="text-white-50 small mb-0">Acesse sua conta para continuar</p>
                         </div>
@@ -115,11 +113,11 @@
                             <input type="password" name="password" class="form-control" placeholder="Senha" required>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <a href="{{ route('forgotPassword') }}" class="small" style="color: var(--cor-principal);">Esqueci minha senha</a>
+                            <a href="{{ route('forgotPassword') }}" class="small text-accent">Esqueci minha senha</a>
                         </div>
                         <button type="submit" class="btn-primary-theme w-100 mb-3">Entrar</button>
                         <p class="text-center small mb-4">Novo por aqui?
-                            <a href="" class="fw-bold" style="color: var(--cor-principal);" onclick="openRegister(event)">Criar conta</a>
+                            <a href="" class="fw-bold text-accent" onclick="openRegister(event)">Criar conta</a>
                         </p>
                         <div class="divider-text mb-3">
                             <span class="divider-line"></span>
@@ -144,7 +142,7 @@
                     <form id="registrationForm" action="" method="post" class="auth-form">
                         @csrf
                         <div class="text-center mb-4">
-                            <img src="{{ $setting?->logoUrl() }}" alt="MarioBET" style="height: 36px;">
+                            <img src="{{ method_exists($setting, 'logoUrl') ? $setting->logoUrl() : asset('assets/images/logo.svg') }}" alt="MarioBET" style="height: 36px;">
                             <h5 class="fw-bold mt-3 mb-1">Criar Conta</h5>
                             <p class="text-white-50 small mb-0">Preencha os dados para se cadastrar</p>
                         </div>
@@ -181,7 +179,7 @@
                             </div>
                         @endif
                         <button type="submit" class="btn-primary-theme w-100 mb-3">Criar Conta</button>
-                        <p class="text-center small">Ao criar conta, você aceita nossos <a href="" style="color: var(--cor-principal);">termos</a> e <a href="" style="color: var(--cor-principal);">política de privacidade</a>.</p>
+                        <p class="text-center small">Ao criar conta, você aceita nossos <a href="" class="text-accent">termos</a> e <a href="" class="text-accent">política de privacidade</a>.</p>
                     </form>
                 </div>
             </div>

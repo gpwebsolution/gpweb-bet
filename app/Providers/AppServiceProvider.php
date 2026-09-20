@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\Setting;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,11 +26,23 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         try {
-            $setting = Setting::first();
-            config(['setting' => $setting?->toArray() ?? []]);
+            $setting = \Helper::getSetting();
+            config(['setting' => is_array($setting) ? $setting : (is_object($setting) && method_exists($setting, 'toArray') ? $setting->toArray() : (array) $setting)]);
             View::share('setting', $setting);
         } catch (\Throwable $e) {
-            config(['setting' => []]);
+            $fallback = [
+                'software_name' => 'MarioBET',
+                'software_description' => '',
+                'prefix' => 'R$',
+                'min_deposit' => 10,
+                'max_deposit' => 99999,
+                'min_saque' => 10,
+                'max_saque' => 99999,
+                'initial_bonus' => 50,
+                'affiliate_default_cpa' => 40,
+                'affiliate_default_baseline' => 70,
+            ];
+            config(['setting' => $fallback]);
             View::share('setting', null);
         }
 

@@ -1,7 +1,7 @@
 <nav id="navbarContent" class="page__navbar">
     <div class="sidebar-header">
         <a class="sidebar-logo" href="{{ url('/') }}">
-            <img src="{{ $setting?->logoUrl() }}" alt="MarioBET" style="height: 32px;">
+            <img src="{{ method_exists($setting, 'logoUrl') ? $setting->logoUrl() : asset('assets/images/logo.svg') }}" alt="MarioBET" style="height: 32px;">
         </a>
     </div>
 

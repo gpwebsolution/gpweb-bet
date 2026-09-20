@@ -1,6 +1,5 @@
 <?php
 
-
 return [
     'list_user' => 'Lista de Usuários',
     'view_user' => 'Ver Usuário',

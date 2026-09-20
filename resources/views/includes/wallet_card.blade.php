@@ -19,7 +19,7 @@
             <div class="d-flex gap-3 flex-wrap">
                 <div>
                     <div class="wallet-label">Bônus</div>
-                    <strong style="color: var(--cor-principal);">
+                    <strong class="text-accent">
                         @if(auth()->user()->wallet->hide_balance == 1) ****
                         @else {{ \Helper::amountFormatDecimal(auth()->user()->wallet->balance_bonus) }}
                         @endif

@@ -8,15 +8,13 @@ use App\Models\GameSession;
 use App\Models\Saque;
 use App\Models\User;
 use Filament\Pages\Dashboard as BasePage;
-use Filament\Forms\Components\DatePicker;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
 
 class Dashboard extends BasePage
 {
     protected string $view = 'filament.pages.dashboard';
 
     public ?string $startDate = null;
+
     public ?string $endDate = null;
 
     public function getViewData(): array

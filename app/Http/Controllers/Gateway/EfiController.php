@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Gateway;
 
 use App\Http\Controllers\Controller;
 use App\Models\EfiPayment;
-use App\Models\Wallet;
 use App\Models\Saque;
 use App\Traits\Gateways\EfiTrait;
 use Carbon\Carbon;
@@ -118,9 +117,9 @@ class EfiController extends Controller
             return back();
         }
 
-        $saque = Saque::find($id);
+        $saque = Saque::with('user.wallet')->find($id);
         if (!empty($saque)) {
-            $wallet = Wallet::where('user_id', $saque->user_id)->first();
+            $wallet = $saque->user?->wallet;
 
             if (!empty($wallet)) {
                 $wallet->increment('balance', $saque->amount);

@@ -176,7 +176,7 @@
                     </div>
                     <div>
                         <h3 class="mb-0 fw-bold" style="color: white;">Sistema de Afiliados</h3>
-                        <p class="mb-0" style="color: rgba(255,255,255,0.5); font-size: 0.875rem;">
+                        <p class="mb-0 text-muted-50 fs-md">
                             Compartilhe seu link e ganhe <strong style="color: #e63946;">{{ $revsharePercent }}%</strong> de todas as apostas dos seus indicados
                         </p>
                     </div>
@@ -186,7 +186,7 @@
                 <div class="affiliate-gradient-card p-4 mb-4">
                     <div class="row align-items-center">
                         <div class="col-lg-7 mb-3 mb-lg-0">
-                            <p class="mb-1" style="color: rgba(255,255,255,0.7); font-size: 0.875rem;">Seu link de afiliado</p>
+                            <p class="mb-1 text-muted-70 fs-md">Seu link de afiliado</p>
                             <div class="d-flex gap-2">
                                 <input type="text" id="urlInput" class="affiliate-link-input" value="{{ $affiliateLink }}" readonly>
                                 <button class="copy-btn" onclick="copyToClipboard()">
@@ -195,10 +195,10 @@
                             </div>
                         </div>
                         <div class="col-lg-5 text-lg-end">
-                            <p class="mb-0" style="color: rgba(255,255,255,0.7); font-size: 0.875rem;">
+                            <p class="mb-0 text-muted-70 fs-md">
                                 <i class="fa-regular fa-users me-1"></i> Total de indicados: <strong style="color: white;">{{ $stats['total_indicated'] }}</strong>
                             </p>
-                            <p class="mb-0" style="color: rgba(255,255,255,0.7); font-size: 0.875rem;">
+                            <p class="mb-0 text-muted-70 fs-md">
                                 <i class="fa-regular fa-chart-line me-1"></i> Volume de apostas: <strong style="color: white;">R$ {{ number_format($stats['total_bet_volume'], 2, ',', '.') }}</strong>
                             </p>
                         </div>
@@ -211,7 +211,7 @@
                     <div class="row g-3 mb-4">
                         <div class="col-lg-3 col-6">
                             <div class="affiliate-stat-card p-3 text-center">
-                                <p class="mb-1" style="color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Ganhos Disponíveis</p>
+                                <p class="mb-1 stat-label">Ganhos Disponíveis</p>
                                 <div class="earnings-value" style="font-size: 1.75rem;">R$ {{ number_format($stats['total_earnings'], 2, ',', '.') }}</div>
                                 <button data-modal-target="#saqueModal" class="btn btn-sm mt-2" style="background: #e63946; color: white; border-radius: 8px; font-weight: 600;">
                                     <i class="fa-regular fa-arrow-right-to-bracket me-1"></i> Resgatar
@@ -220,30 +220,30 @@
                         </div>
                         <div class="col-lg-3 col-6">
                             <div class="affiliate-stat-card p-3 text-center">
-                                <p class="mb-1" style="color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Comissão</p>
-                                <div style="font-size: 1.75rem; font-weight: 800; color: #e63946;">{{ $revsharePercent }}%</div>
-                                <p class="mb-0 mt-1" style="color: rgba(255,255,255,0.4); font-size: 0.75rem;">Revenue Share</p>
+                                <p class="mb-1 stat-label">Comissão</p>
+                                <div class="stat-value-lg text-accent">{{ $revsharePercent }}%</div>
+                                <p class="mb-0 mt-1 text-muted-40 fs-sm">Revenue Share</p>
                             </div>
                         </div>
                         <div class="col-lg-3 col-6">
                             <div class="affiliate-stat-card p-3 text-center">
-                                <p class="mb-1" style="color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Ganhos no Mês</p>
-                                <div style="font-size: 1.75rem; font-weight: 800; color: #10b981;">R$ {{ number_format($monthlyEarnings, 2, ',', '.') }}</div>
-                                <p class="mb-0 mt-1" style="color: rgba(255,255,255,0.4); font-size: 0.75rem;">Comissões recebidas</p>
+                                <p class="mb-1 stat-label">Ganhos no Mês</p>
+                                <div class="stat-value-lg text-success-custom">R$ {{ number_format($monthlyEarnings, 2, ',', '.') }}</div>
+                                <p class="mb-0 mt-1 text-muted-40 fs-sm">Comissões recebidas</p>
                             </div>
                         </div>
                         <div class="col-lg-3 col-6">
                             <div class="affiliate-stat-card p-3 text-center">
-                                <p class="mb-1" style="color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Indicados</p>
-                                <div style="font-size: 1.75rem; font-weight: 800; color: #3b82f6;">{{ $stats['total_indicated'] }}</div>
-                                <p class="mb-0 mt-1" style="color: rgba(255,255,255,0.4); font-size: 0.75rem;">Total de cadastros</p>
+                                <p class="mb-1 stat-label">Indicados</p>
+                                <div class="stat-value-lg text-info-custom">{{ $stats['total_indicated'] }}</div>
+                                <p class="mb-0 mt-1 text-muted-40 fs-sm">Total de cadastros</p>
                             </div>
                         </div>
                     </div>
 
                     {{-- Tabs: Indicados / Comissões --}}
                     <div class="affiliate-table mb-4">
-                        <div class="px-3 py-3 d-flex align-items-center gap-3 flex-wrap" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div class="px-3 py-3 d-flex align-items-center gap-3 flex-wrap border-subtle-bottom">
                             <button class="tab-btn active" data-tab="tab-indications" style="background:none;border:none;color:#e63946;font-weight:700;font-size:0.9rem;padding:0;text-transform:uppercase;letter-spacing:0.05em;">
                                 <i class="fa-regular fa-users me-1"></i> Indicados
                             </button>
@@ -253,12 +253,12 @@
                             <div class="ms-auto d-flex gap-3 align-items-center flex-wrap">
                                 <input type="date" class="form-control form-control-sm" style="width:auto;max-width:150px;background:rgba(255,255,255,0.04) !important;color:#fff !important;border:1px solid rgba(255,255,255,0.08) !important;" value="{{ $searchDate ?? '' }}" onchange="window.location.href='{{ url('painel/affiliates') }}?search_date='+this.value">
                                 @if($searchDate)
-                                    <a href="{{ url('painel/affiliates') }}" class="btn btn-sm" style="background:rgba(255,255,255,0.05);color:#aaa;padding:4px 10px;border-radius:6px;text-decoration:none;"><i class="fa-regular fa-xmark"></i></a>
+                                    <a href="{{ url('painel/affiliates') }}" class="btn btn-sm btn-sm-clear"><i class="fa-regular fa-xmark"></i></a>
                                 @endif
-                                <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">
+                                <div class="fs-sm text-muted-40">
                                     <i class="fa-regular fa-circle-check me-1" style="color:#10b981;"></i> Recebido: <strong style="color:#10b981;">R$ {{ number_format($stats['total_earnings'], 2, ',', '.') }}</strong>
                                 </div>
-                                <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">
+                                <div class="fs-sm text-muted-40">
                                     <i class="fa-regular fa-clock me-1" style="color:#f59e0b;"></i> Pendente: <strong style="color:#f59e0b;">R$ {{ number_format($stats['pending_commissions'], 2, ',', '.') }}</strong>
                                 </div>
                             </div>
@@ -279,7 +279,7 @@
                                             <tr>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-2">
-                                                        <div style="width: 32px; height: 32px; background: linear-gradient(135deg,#e63946,#c1121f); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px;">
+                                                        <div class="avatar-circle">
                                                             {{ strtoupper(substr($indication->name ?? '--', 0, 1)) }}
                                                         </div>
                                                         <span>{{ $indication->name }}</span>
@@ -289,7 +289,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="2" class="text-center py-4" style="color: rgba(255,255,255,0.4);">
+                                                <td colspan="2" class="text-center py-4 text-muted-40">
                                                     <i class="fa-regular fa-inbox me-2"></i> Nenhum indicado encontrado
                                                 </td>
                                             </tr>
@@ -298,7 +298,7 @@
                                 </table>
                             </div>
                             @if($indications->hasPages())
-                                <div class="p-3" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                                <div class="p-3 border-subtle-top">
                                     {{ $indications->appends(['search_date' => $searchDate ?? ''])->links() }}
                                 </div>
                             @endif
@@ -329,13 +329,13 @@
                                                 </td>
                                                 <td><strong style="color:#fbbf24;">R$ {{ number_format($history->total_commission, 2, ',', '.') }}</strong></td>
                                                 <td>
-                                                    <span style="color:#10b981;">
+                                                    <span class="text-success-custom">
                                                         R$ {{ number_format($history->total_received ?? 0, 2, ',', '.') }}
                                                     </span>
                                                 </td>
                                                 <td>
                                                     @if(($history->total_pending ?? 0) > 0)
-                                                        <span style="color:#f59e0b;">
+                                                        <span class="text-warning-custom">
                                                             R$ {{ number_format($history->total_pending, 2, ',', '.') }}
                                                         </span>
                                                     @else
@@ -345,7 +345,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center py-4" style="color: rgba(255,255,255,0.4);">
+                                                <td colspan="4" class="text-center py-4 text-muted-40">
                                                     <i class="fa-regular fa-inbox me-2"></i> Nenhuma comissão registrada
                                                 </td>
                                             </tr>
@@ -354,7 +354,7 @@
                                 </table>
                             </div>
                             @if($histories->hasPages())
-                                <div class="p-3" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                                <div class="p-3 border-subtle-top">
                                     {{ $histories->appends(['search_date' => $searchDate ?? ''])->links() }}
                                 </div>
                             @endif
@@ -383,7 +383,7 @@
 
                     {{-- FAQ --}}
                     <div class="affiliate-table mt-4">
-                        <div class="px-3 py-3" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div class="px-3 py-3 border-subtle-bottom">
                             <h5 class="mb-0" style="color: white;"><i class="fa-regular fa-circle-question me-2" style="color: #e63946;"></i> Perguntas Frequentes</h5>
                         </div>
                         <div class="p-3">

@@ -24,7 +24,7 @@
                                 <h5 class="text-white mt-3">ESCANEIE O QRCODE PARA PAGAR</h5>
                             </div>
                             <div id="qrcode" style="width:260px;height:260px;margin:0 auto;"></div>
-                            <input id="pixcopiaecola" type="text" class="form-control mt-3 text-center" value="{{ $qrData['qrcode'] ?? '' }}" readonly>
+                            <input id="pixcopiaecola" type="text" class="form-control mt-3 text-center" value="{{ $qrData['pixCopiaECola'] ?? $qrData['qrcode'] ?? '' }}" readonly>
                             <div class="d-grid mt-2">
                                 <button id="copyQrcodePix" class="btn btn-primary" type="button" style="background: var(--cor-principal); border-color: var(--cor-principal);">
                                     <i class="fa-regular fa-copy me-2"></i>COPIAR CÓDIGO PIX
@@ -205,7 +205,7 @@
                 var expiresAt = {!! json_encode(session('qr_data')['expires_at'] ?? null) !!};
                 var qrCode = document.getElementById('qrcode');
                 if (qrCode && !qrCode.querySelector('img')) {
-                    new QRCode(qrCode, { width: 260, height: 260, colorDark: '#ffffff', colorLight: '#1A1C1F', correctLevel: QRCode.CorrectLevel.H }).makeCode({!! json_encode(session('qr_data')['qrcode']) !!});
+                    new QRCode(qrCode, { width: 260, height: 260, colorDark: '#ffffff', colorLight: '#1A1C1F', correctLevel: QRCode.CorrectLevel.H }).makeCode({!! json_encode(session('qr_data')['pixCopiaECola'] ?? session('qr_data')['qrcode']) !!});
                 }
 
                 fetch('{{ url(\Helper::getGatewaySelected().'/consult-status-transaction') }}', {
@@ -253,7 +253,13 @@
             const formData = new FormData(this);
             var cpfRaw = (formData.get('cpf') || '').replace(/\D/g, '');
             formData.set('cpf', cpfRaw);
-            fetch('{{ url(\Helper::getGatewaySelected().'/qrcode-pix') }}', { method: 'POST', body: formData })
+            fetch('{{ url(\Helper::getGatewaySelected().'/qrcode-pix') }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                }
+            })
                 .then(response => response.json())
                 .then(data => {
                     if(data.status) {
@@ -261,8 +267,9 @@
                         qrContainer.style.display = 'block';
                         qrContainer.classList.add('fade-in-qr');
                         document.getElementById('depositFormPage').style.display = 'none';
-                        new QRCode(document.getElementById('qrcode'), { width: 260, height: 260, colorDark: '#ffffff', colorLight: '#1A1C1F', correctLevel: QRCode.CorrectLevel.H }).makeCode(data.qrcode);
-                        document.getElementById("pixcopiaecola").value = data.qrcode;
+                        var pixPayload = data.pixCopiaECola || data.qrcode;
+                        new QRCode(document.getElementById('qrcode'), { width: 260, height: 260, colorDark: '#ffffff', colorLight: '#1A1C1F', correctLevel: QRCode.CorrectLevel.H }).makeCode(pixPayload);
+                        document.getElementById("pixcopiaecola").value = pixPayload;
                         paymentWatcher = Object.create(PaymentWatcher);
                         paymentWatcher.start(data.idTransaction, data.expires_at);
                     } else {

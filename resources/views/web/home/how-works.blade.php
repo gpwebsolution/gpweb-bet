@@ -70,7 +70,7 @@
                         </div>
                     </div>
 
-                    <h4 class="mt-5"><i class="fa-regular fa-circle-question me-2" style="color: var(--cor-principal);"></i>Perguntas Frequentes</h4>
+                    <h4 class="mt-5"><i class="fa-regular fa-circle-question me-2 text-accent"></i>Perguntas Frequentes</h4>
 
                     <div class="accordion mt-3" id="howWorksFaq">
                         <div class="accordion-item">

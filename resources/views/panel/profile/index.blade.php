@@ -56,7 +56,7 @@
                         <p class="mb-0" style="color: rgba(255,255,255,0.6); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em;">
                             <i class="fa-regular fa-crown me-1"></i>{{ $currentVip ? 'Nível ' . $currentVip->level : 'Sem nível VIP' }}
                         </p>
-                        <h5 class="fw-bold mb-0" style="color: #fff;">{{ $currentVip?->name ?? 'Iniciante' }}</h5>
+                        <h5 class="fw-bold mb-0 text-white">{{ $currentVip?->name ?? 'Iniciante' }}</h5>
                     </div>
                     <div class="col-lg-5 mt-2 mt-lg-0">
                         @if($nextVip)

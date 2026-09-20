@@ -227,7 +227,7 @@
                                 <span><i class="fa-regular fa-arrow-right"></i> {{ $nextVip->name }}</span>
                             </div>
                             <div class="mt-2">
-                                <div class="d-flex justify-content-between" style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">
+                                <div class="d-flex justify-content-between fs-xs text-muted-50">
                                     <span><i class="fa-regular fa-arrow-up-to-bracket"></i> Depósito</span>
                                     <span>R$ {{ number_format($userDeposit, 2, ',', '.') }} / R$ {{ number_format($nextVip->min_deposit, 2, ',', '.') }}</span>
                                 </div>
@@ -236,7 +236,7 @@
                                 </div>
                             </div>
                             <div class="mt-2">
-                                <div class="d-flex justify-content-between" style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">
+                                <div class="d-flex justify-content-between fs-xs text-muted-50">
                                     <span><i class="fa-regular fa-dice"></i> Apostas</span>
                                     <span>R$ {{ number_format($userBets, 2, ',', '.') }} / R$ {{ number_format($nextVip->min_bets, 2, ',', '.') }}</span>
                                 </div>
@@ -352,25 +352,25 @@
             <div class="row g-2 mb-3">
                 <div class="col-3 col-lg-3">
                     <div class="vip-card p-2 text-center">
-                        <p class="mb-0" style="color: rgba(255,255,255,0.4); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;"><i class="fa-regular fa-layer-group"></i> Nv</p>
+                        <p class="mb-0 text-muted-40 fs-2xs"><i class="fa-regular fa-layer-group"></i> Nv</p>
                         <div style="font-size: 1.2rem; font-weight: 800; color: {{ $currentVip?->color ?? '#888' }};">{{ $currentVip?->level ?? 0 }}</div>
                     </div>
                 </div>
                 <div class="col-3 col-lg-3">
                     <div class="vip-card p-2 text-center">
-                        <p class="mb-0" style="color: rgba(255,255,255,0.4); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;"><i class="fa-regular fa-calendar-week"></i> Sem</p>
+                        <p class="mb-0 text-muted-40 fs-2xs"><i class="fa-regular fa-calendar-week"></i> Sem</p>
                         <div style="font-size: 1.2rem; font-weight: 800; color: #10b981;">R$ {{ number_format($currentVip?->weekly_bonus ?? 0, 2, ',', '.') }}</div>
                     </div>
                 </div>
                 <div class="col-3 col-lg-3">
                     <div class="vip-card p-2 text-center">
-                        <p class="mb-0" style="color: rgba(255,255,255,0.4); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;"><i class="fa-regular fa-calendar"></i> Mês</p>
+                        <p class="mb-0 text-muted-40 fs-2xs"><i class="fa-regular fa-calendar"></i> Mês</p>
                         <div style="font-size: 1.2rem; font-weight: 800; color: #3b82f6;">R$ {{ number_format($currentVip?->monthly_bonus ?? 0, 2, ',', '.') }}</div>
                     </div>
                 </div>
                 <div class="col-3 col-lg-3">
                     <div class="vip-card p-2 text-center">
-                        <p class="mb-0" style="color: rgba(255,255,255,0.4); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;"><i class="fa-regular fa-list"></i> Total</p>
+                        <p class="mb-0 text-muted-40 fs-2xs"><i class="fa-regular fa-list"></i> Total</p>
                         <div style="font-size: 1.2rem; font-weight: 800; color: #e63946;">{{ $levels->count() }}</div>
                     </div>
                 </div>
@@ -378,7 +378,7 @@
 
             {{-- VIP levels table --}}
             <div class="vip-tbl mb-3">
-                <div class="px-3 py-2" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div class="px-3 py-2 border-subtle-bottom">
                     <h6 class="mb-0" style="color: #fff; font-size: 0.9rem;"><i class="fa-regular fa-list me-1" style="color: #e63946;"></i> Níveis</h6>
                 </div>
                 <div class="table-responsive" style="overflow-x: auto;">
@@ -403,9 +403,9 @@
                                     <td><span class="vip-dot" style="background:{{ $l->color }};"></span> <span style="color:{{ $l->color }}; font-weight:600;">{{ $l->name }}</span></td>
                                     <td>R$ {{ number_format($l->min_deposit, 0, ',', '.') }}</td>
                                     <td>{!! $l->min_bets > 0 ? 'R$ ' . number_format($l->min_bets, 0, ',', '.') : '<i class="fa-regular fa-minus"></i>' !!}</td>
-                                    <td style="color:#10b981;">R$ {{ number_format($l->weekly_bonus, 2, ',', '.') }}</td>
-                                    <td style="color:#3b82f6;">R$ {{ number_format($l->monthly_bonus, 2, ',', '.') }}</td>
-                                    <td style="color:#f59e0b;">R$ {{ number_format($l->level_up_bonus, 2, ',', '.') }}</td>
+                                    <td class="text-success-custom">R$ {{ number_format($l->weekly_bonus, 2, ',', '.') }}</td>
+                                    <td class="text-info-custom">R$ {{ number_format($l->monthly_bonus, 2, ',', '.') }}</td>
+                                    <td class="text-warning-custom">R$ {{ number_format($l->level_up_bonus, 2, ',', '.') }}</td>
                                     <td>
                                         @if($isCur)
                                             <span class="badge-vip-cur" style="padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600;white-space:nowrap;">

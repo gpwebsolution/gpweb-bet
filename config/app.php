@@ -126,6 +126,8 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
+    'game_token_key' => env('GAME_TOKEN_KEY', hash('sha256', env('APP_KEY', 'fallback'))),
+
     /*
     |--------------------------------------------------------------------------
     | Maintenance Mode Driver

@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class GameSession extends Model
 {
     protected $fillable = [
-        'user_id', 'game_id', 'bet_amount', 'result_amount',
-        'profit', 'type', 'round_id',
+        'user_id', 'game_id', 'game_name', 'game_uuid', 'provider', 'balance_source',
+        'bet_amount', 'result_amount', 'profit', 'type', 'round_id',
     ];
 
     public function scopeToday($query)

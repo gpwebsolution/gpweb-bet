@@ -3,7 +3,7 @@
         <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
             <div class="d-flex flex-column gap-2">
                 <div class="d-flex align-items-center gap-3">
-                    <img src="{{ $setting?->logoUrl() }}" alt="MarioBET" style="height: 32px;">
+                    <img src="{{ method_exists($setting, 'logoUrl') ? $setting->logoUrl() : asset('assets/images/logo.svg') }}" alt="MarioBET" style="height: 32px;">
                     <img src="{{ asset('/assets/images/mais18.svg') }}" alt="18+" height="50">
                 </div>
                 <p class="mb-0 small" style="color: rgba(255,255,255,0.45); max-width: 380px; line-height: 1.5;">

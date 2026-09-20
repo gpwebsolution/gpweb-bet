@@ -8,12 +8,11 @@
 @endsection
 
 @section('content')
-<div class="container-page">
-    @include('includes.navbar_top')
-    @include('includes.navbar_left')
+@include('includes.navbar_top')
+@include('includes.navbar_left')
 
-    <div class="page__content">
-        <div class="container-fluid">
+<div class="page__content">
+    <div class="container-fluid">
             <div class="row justify-content-center" style="min-height: 80vh; align-content: center;">
                 <div class="col-12 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-lg" style="background: #1a1c22; border-radius: 16px;">
@@ -83,7 +82,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>
 @endsection

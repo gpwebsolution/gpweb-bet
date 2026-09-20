@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Vip;
 use App\Models\VipBonus;
+use App\Services\VipService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,31 +16,15 @@ class VipController extends Controller
     {
         $user = auth()->user();
         $levels = Vip::where('active', true)->orderBy('level')->get();
-        $currentVip = $user->vip;
-        $nextVip = null;
-        $progressDeposit = 0;
-        $progressBets = 0;
-        $userDeposit = 0;
-        $userBets = 0;
         $weeklyClaimed = false;
         $monthlyClaimed = false;
 
-        // total accumulated ever (no reset — excess carries forward)
-        $userDeposit = (float) DB::table('efi_payments')
-            ->where('user_id', $user->id)
-            ->where('status', 'paid')
-            ->sum('amount');
+        $vipData = VipService::resolveForUser($user);
+        extract($vipData);
 
-        $userBets = (float) ($user->wallet->total_bet ?? 0);
-
-        // auto-assign the highest VIP level where EITHER deposit OR bet requirement is met
-        $qualified = Vip::where('active', true)
-            ->where(function ($q) use ($userDeposit, $userBets) {
-                $q->where('min_deposit', '<=', $userDeposit)
-                  ->orWhere('min_bets', '<=', $userBets);
-            })
-            ->orderBy('level', 'desc')
-            ->first();
+        $qualified = $levels->filter(function ($vip) use ($userDeposit, $userBets) {
+            return ($vip->min_deposit <= $userDeposit) || ($vip->min_bets <= $userBets);
+        })->last();
 
         if ($qualified && (!$currentVip || $qualified->level > $currentVip->level)) {
             $oldLevel = $currentVip?->level ?? 0;
@@ -49,9 +34,8 @@ class VipController extends Controller
             $user->unsetRelation('vip');
             $currentVip = $user->vip;
 
-            // create a claimable level-up reward for each newly unlocked level
             for ($lvl = $oldLevel + 1; $lvl <= $currentVip->level; $lvl++) {
-                $levelVip = Vip::where('active', true)->where('level', $lvl)->first();
+                $levelVip = $levels->firstWhere('level', $lvl);
                 if ($levelVip && $levelVip->level_up_bonus > 0) {
                     VipBonus::create([
                         'user_id' => $user->id,
@@ -62,13 +46,28 @@ class VipController extends Controller
                     ]);
                 }
             }
+
+            $nextVip = $levels->first(function ($vip) use ($currentVip) {
+                return $vip->level > $currentVip->level;
+            }) ?? $levels->first();
+
+            if ($nextVip) {
+                $progressDeposit = $nextVip->min_deposit > 0
+                    ? min(100, round(($userDeposit / $nextVip->min_deposit) * 100))
+                    : ($nextVip->min_deposit == 0 ? 100 : 0);
+
+                $progressBets = $nextVip->min_bets > 0
+                    ? min(100, round(($userBets / $nextVip->min_bets) * 100))
+                    : ($nextVip->min_bets == 0 ? 100 : 0);
+            }
         }
 
         if ($currentVip) {
-            $nextVip = Vip::where('active', true)
-                ->where('level', '>', $currentVip->level)
-                ->orderBy('level')
-                ->first();
+            if (!$nextVip) {
+                $nextVip = $levels->first(function ($vip) use ($currentVip) {
+                    return $vip->level > $currentVip->level;
+                });
+            }
 
             $weeklyClaimed = VipBonus::where('user_id', $user->id)
                 ->where('type', 'weekly')
@@ -80,19 +79,9 @@ class VipController extends Controller
                 ->where('claimed_at', '>=', Carbon::now()->subMonth())
                 ->exists();
         } else {
-            $nextVip = Vip::where('active', true)
-                ->orderBy('level')
-                ->first();
-        }
-
-        if ($nextVip) {
-            $progressDeposit = $nextVip->min_deposit > 0
-                ? min(100, round(($userDeposit / $nextVip->min_deposit) * 100))
-                : ($nextVip->min_deposit == 0 ? 100 : 0);
-
-            $progressBets = $nextVip->min_bets > 0
-                ? min(100, round(($userBets / $nextVip->min_bets) * 100))
-                : ($nextVip->min_bets == 0 ? 100 : 0);
+            if (!$nextVip) {
+                $nextVip = $levels->first();
+            }
         }
 
         $progressOverall = (int) min($progressDeposit, $progressBets);

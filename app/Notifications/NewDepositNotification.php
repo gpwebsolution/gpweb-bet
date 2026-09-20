@@ -24,7 +24,7 @@ class NewDepositNotification extends Notification
     {
         return [
             'title' => 'Novo Depósito',
-            'message' => "{$this->userName} fez um depósito de R$ " . number_format($this->amount, 2, ',', '.'),
+            'message' => "{$this->userName} fez um depósito de R$ ".number_format($this->amount, 2, ',', '.'),
         ];
     }
 }

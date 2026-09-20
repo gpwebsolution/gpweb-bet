@@ -138,7 +138,7 @@
                                         width: 240, height: 240,
                                         colorDark: '#ffffff', colorLight: '#1A1C1F',
                                         correctLevel: QRCode.CorrectLevel.H
-                                    }).makeCode({!! json_encode($qrCode ?: $qrCopy) !!});
+                                    }).makeCode({!! json_encode($qrCopy ?: $qrCode) !!});
                                 </script>
                             @endif
                             @if($qrCopy)

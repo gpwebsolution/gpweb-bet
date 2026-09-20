@@ -85,7 +85,7 @@ class BannerSeeder extends Seeder
         ];
 
         foreach ($banners as $banner) {
-            DB::table('banners')->insert($banner);
+            DB::table('banners')->insertOrIgnore($banner);
         }
     }
 }

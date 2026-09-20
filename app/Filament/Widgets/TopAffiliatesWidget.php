@@ -9,7 +9,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class TopAffiliatesWidget extends BaseWidget
 {
-    protected int | string | array $columnSpan = 'half';
+    protected int|string|array $columnSpan = 'half';
 
     protected static ?string $heading = 'Top Afiliados';
 

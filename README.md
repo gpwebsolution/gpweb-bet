@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Alpine.js-3.14-8BC0D0?logo=alpine.js" alt="Alpine.js 3.14">
   <img src="https://img.shields.io/badge/Filament-5.0-EA580B?logo=filament" alt="Filament 5">
   <img src="https://img.shields.io/badge/Vite-6.0-646CFF?logo=vite" alt="Vite 6">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+  <img src="https://img.shields.io/badge/license-proprietary-red" alt="Proprietary License">
 </p>
 
 ---
@@ -284,4 +284,4 @@ php artisan test
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a licença **MIT**.
+Proprietária. Consulte o proprietário do projeto para termos de uso.

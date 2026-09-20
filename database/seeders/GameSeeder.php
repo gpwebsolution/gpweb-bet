@@ -25,7 +25,7 @@ class GameSeeder extends Seeder
         ];
 
         foreach ($games as $game) {
-            DB::table('games')->insert($game);
+            DB::table('games')->insertOrIgnore($game);
         }
     }
 }

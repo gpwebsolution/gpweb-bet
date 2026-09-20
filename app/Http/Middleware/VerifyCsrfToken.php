@@ -13,9 +13,6 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'efi/callback',
-        'efi/qrcode-pix',
-        'efi/consult-status-transaction',
-        'efi/payment-stream/*',
         'webhook/pix',
         'api/*',
     ];

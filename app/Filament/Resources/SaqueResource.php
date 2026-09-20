@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SaqueResource\Pages;
 use App\Models\Saque;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -11,7 +13,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
-use Filament\Actions\Action;
 use Filament\Tables\Table;
 
 class SaqueResource extends Resource
@@ -96,8 +97,8 @@ class SaqueResource extends Resource
                     ->label('Status'),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('created_from')->label('De'),
-                        \Filament\Forms\Components\DatePicker::make('created_until')->label('Até'),
+                        DatePicker::make('created_from')->label('De'),
+                        DatePicker::make('created_until')->label('Até'),
                     ])
                     ->query(fn ($query, array $data) => $query
                         ->when($data['created_from'], fn ($q, $date) => $q->whereDate('created_at', '>=', $date))

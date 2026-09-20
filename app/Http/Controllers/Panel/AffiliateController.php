@@ -3,12 +3,9 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
-use App\Models\Affiliate;
 use App\Models\AffiliateHistory;
 use App\Models\Commission;
-use App\Models\Setting;
 use App\Models\User;
-use App\Models\Wallet;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +14,11 @@ class AffiliateController extends Controller
 {
     public function index(Request $request)
     {
-        $user = auth()->user();
+        $user = auth()->user()->load('wallet');
         $searchDate = $request->get('search_date', '');
         $affiliateLink = url('/register?ref=' . $user->id);
 
-        $indications = User::where('inviter', $user->id)
+        $indications = User::with('wallet')->where('inviter', $user->id)
             ->when($searchDate, function ($q) use ($searchDate) {
                 $q->whereDate('created_at', $searchDate);
             })
@@ -46,7 +43,7 @@ class AffiliateController extends Controller
 
         $stats = [
             'total_indicated' => User::where('inviter', $user->id)->count(),
-            'total_earnings' => Wallet::where('user_id', $user->id)->value('refer_rewards') ?? 0,
+            'total_earnings' => $user->wallet->refer_rewards ?? 0,
             'total_bet_volume' => AffiliateHistory::where('inviter', $user->id)
                 ->where('commission_type', 'revshare')
                 ->sum('losses_amount'),
@@ -57,7 +54,7 @@ class AffiliateController extends Controller
 
         $revsharePercent = floatval($user->affiliate_revenue_share);
         if ($revsharePercent <= 0) {
-            $setting = Setting::first();
+            $setting = \Helper::getSetting();
             $revsharePercent = floatval($setting->affiliate_default_percentage ?? 10);
         }
 
@@ -66,7 +63,7 @@ class AffiliateController extends Controller
             ->where('created_at', '>=', Carbon::now()->startOfMonth())
             ->sum('commission_paid');
 
-        $latestCommissions = Commission::whereIn('user_id', function ($q) use ($user) {
+        $latestCommissions = Commission::with('user')->whereIn('user_id', function ($q) use ($user) {
             $q->select('id')->from('users')->where('inviter', $user->id);
         })
         ->where('status', 'pending')
@@ -125,10 +122,10 @@ class AffiliateController extends Controller
 
     public function getStats()
     {
-        $user = auth()->user();
+        $user = auth()->user()->load('wallet');
 
         $totalReferred = User::where('inviter', $user->id)->count();
-        $earnings = Wallet::where('user_id', $user->id)->value('refer_rewards') ?? 0;
+        $earnings = $user->wallet->refer_rewards ?? 0;
         $totalBetVolume = AffiliateHistory::where('inviter', $user->id)
             ->where('commission_type', 'revshare')
             ->sum('losses_amount');

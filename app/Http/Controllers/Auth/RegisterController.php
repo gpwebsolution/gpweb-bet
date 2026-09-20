@@ -44,7 +44,7 @@ class RegisterController extends Controller
             'password' => $data['password'],
         ];
 
-        if (!empty($data['ref'])) {
+        if (! empty($data['ref'])) {
             $userData['inviter'] = (int) $data['ref'];
         }
 
@@ -53,7 +53,7 @@ class RegisterController extends Controller
         event(new Registered($user));
         Auth::login($user);
 
-        $admins = User::role('admin')->get();
+        $admins = \Helper::getAdminUsers();
         Notification::send($admins, new NewUserNotification($user->name, $user->email));
 
         if ($request->ajax()) {

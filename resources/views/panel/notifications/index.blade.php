@@ -13,7 +13,7 @@
                         <i class="fa-regular fa-bell" style="color: white; font-size: 1.25rem;"></i>
                     </div>
                     <div>
-                        <h3 class="mb-0 fw-bold" style="color: white;">Notificações</h3>
+                        <h3 class="mb-0 fw-bold text-white">Notificações</h3>
                         <p class="mb-0" style="color: rgba(255,255,255,0.5); font-size: 0.875rem;">
                             @if(count($notifications) > 0)
                                 {{ count($notifications) }} notifica{{ count($notifications) > 1 ? 'ções' : 'ção' }}
@@ -47,7 +47,7 @@
                         <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
                             <i class="fa-regular fa-bell-slash" style="font-size: 2rem; color: rgba(255,255,255,0.2);"></i>
                         </div>
-                        <h5 style="color: rgba(255,255,255,0.4);">Nenhuma notificação</h5>
+                        <h5 class="text-muted-40">Nenhuma notificação</h5>
                         <p style="color: rgba(255,255,255,0.25); font-size: 0.875rem;">Você não possui notificações no momento</p>
                     </div>
                 @endif

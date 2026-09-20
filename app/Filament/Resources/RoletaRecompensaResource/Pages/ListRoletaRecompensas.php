@@ -10,5 +10,8 @@ class ListRoletaRecompensas extends ListRecords
 {
     protected static string $resource = RoletaRecompensaResource::class;
 
-    protected function getHeaderActions(): array { return [CreateAction::make(),]; }
+    protected function getHeaderActions(): array
+    {
+        return [CreateAction::make()];
+    }
 }

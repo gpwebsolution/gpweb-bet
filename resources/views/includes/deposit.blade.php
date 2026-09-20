@@ -198,7 +198,8 @@
                 method: 'POST',
                 body: JSON.stringify({ idTransaction }),
                 headers: new Headers({
-                    'Content-Type': 'application/json; charset=UTF-8'
+                    'Content-Type': 'application/json; charset=UTF-8',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 })
             })
                 .then(response => response.json())
@@ -226,7 +227,10 @@
 
             fetch('{{ url(\Helper::getGatewaySelected().'/qrcode-pix') }}', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                }
             })
                 .then(response => response.json())
                 .then(data => {
@@ -234,15 +238,16 @@
                         document.getElementById('qrcode-container').style.display = 'block';
                         document.getElementById('depositForm').style.display = 'none';
 
+                        var pixPayload = data.pixCopiaECola || data.qrcode;
                         new QRCode(document.getElementById('qrcode'), {
                             width: 260,
                             height: 260,
                             colorDark: '#ffffff',
                             colorLight: '#1A1C1F',
                             correctLevel: QRCode.CorrectLevel.H
-                        }).makeCode(data.qrcode);
+                        }).makeCode(pixPayload);
 
-                        document.getElementById("pixcopiaecola").value = data.qrcode;
+                        document.getElementById("pixcopiaecola").value = pixPayload;
 
                         intervalId = setInterval(function() {
                             consultStatusTransaction(data.idTransaction);

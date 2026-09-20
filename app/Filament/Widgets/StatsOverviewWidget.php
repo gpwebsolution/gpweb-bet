@@ -18,15 +18,15 @@ class StatsOverviewWidget extends BaseWidget
                 ->description('Total de contas ativas')
                 ->icon('heroicon-o-users')
                 ->color('success'),
-            Stat::make('Saldo Total', 'R$ ' . number_format(Wallet::sum('balance') + Wallet::sum('balance_bonus'), 2, ',', '.'))
+            Stat::make('Saldo Total', 'R$ '.number_format(Wallet::sum('balance') + Wallet::sum('balance_bonus'), 2, ',', '.'))
                 ->description('Saldo de todos os usuários')
                 ->icon('heroicon-o-currency-dollar')
                 ->color('info'),
             Stat::make('Apostas Hoje', GameSession::today()->count())
-                ->description(number_format(GameSession::today()->sum('bet_amount'), 2, ',', '.') . ' em apostas')
+                ->description(number_format(GameSession::today()->sum('bet_amount'), 2, ',', '.').' em apostas')
                 ->icon('heroicon-o-play')
                 ->color('warning'),
-            Stat::make('Comissões Pendentes', 'R$ ' . number_format(Commission::pending()->sum('amount'), 2, ',', '.'))
+            Stat::make('Comissões Pendentes', 'R$ '.number_format(Commission::pending()->sum('amount'), 2, ',', '.'))
                 ->description('Aguardando pagamento')
                 ->icon('heroicon-o-banknotes')
                 ->color('danger'),

@@ -5,118 +5,147 @@ namespace App\Traits\Providers;
 use App\Models\GameExclusive;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Traits\Affiliates\CommissionTrait;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 trait PrivateGamesTrait
 {
+    private const SLOTINCONS = 0;
+
+    private const ACTIVEICONS = 1;
+
+    private const ACTIVELINES = 2;
+
+    private const DROPLINEDATA = 3;
+
+    private const MULTIPLYCOUNT = 4;
+
+    private const PAYOUT = 5;
+
+    private static function secureShuffle(array &$array): void
+    {
+        $count = count($array);
+        for ($i = $count - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$array[$i], $array[$j]] = [$array[$j], $array[$i]];
+        }
+    }
 
     /**
-     * @dev @victormsalatiel - Não comprem código roubado
-     * @param string $token
-     * @param array $settingGame
-     * @param array $iconData
-     * @param array $activeLines
-     * @param array $dropLine
-     * @param array $betSizeList
-     * @param array $multipleList
-     * @param array $feature
      * @return JsonResponse
      */
     public static function SessionStructure(string $token, array $settingGame, array $iconData, array $activeLines, array $dropLine, array $betSizeList, array $multipleList, array $feature, array $featureResult = [])
     {
-        $tokenOpen  = \Helper::DecToken($token);
-        $setting    = \Helper::getSetting();
+        try {
+            $tokenOpen = \Helper::DecToken($token);
+            $setting = \Helper::getSetting();
 
-        if(isset($tokenOpen['status']) && $tokenOpen['status']) {
-            $user = User::find($tokenOpen['id']);
-            $wallet = Wallet::where('user_id', $tokenOpen['id'])->first();
+            if (isset($tokenOpen['status']) && $tokenOpen['status']) {
+                $userId = (int) $tokenOpen['sub'];
+                $user = User::with('wallet')->find($userId);
 
-            $data                       = new \stdClass();
-            $data->user_name            = $user->name;
-            $data->credit               = $wallet ? ($wallet->balance + $wallet->balance_bonus) : 0;
-            $data->num_line             = $settingGame['num_line'];
-            $data->line_num             = $settingGame['line_num'];
-            $data->bet_amount           = $settingGame['bet_amount'];
-            $data->free_num             = $settingGame['free_num'];
-            $data->free_total           = $settingGame['free_total'];
-            $data->free_amount          = $settingGame['free_amount'];
-            $data->free_multi           = $settingGame['free_multi'];
-            $data->freespin_mode        = $settingGame['freespin_mode'];
-            $data->multiple_list        = $multipleList;
-            $data->credit_line          = $settingGame['credit_line'];
-            $data->buy_feature          = $settingGame['buy_feature'];
-            $data->buy_max              = $settingGame['buy_max'];
-            $data->feature              = $feature;
-            $data->total_way            = $settingGame['total_way'];
-            $data->multiply             = $settingGame['multiply'];
-            $data->icon_data            = $iconData;
-            $data->active_lines         = $activeLines;
-            $data->drop_line            = $dropLine;
-            $data->currency_prefix      = $setting->prefix;
-            $data->currency_suffix      = "";
-            $data->currency_thousand    = ".";
-            $data->currency_decimal     = ",";
-            $data->bet_size_list        = $betSizeList;
+                if (! $user) {
+                    return response()->json(['success' => false, 'message' => 'Usuário não encontrado'], 404);
+                }
 
-            $data->previous_session     = $settingGame['previous_session'];
-            $data->game_state           = $settingGame['game_state'];
-            $data->feature_result       = $featureResult;
+                $wallet = $user->wallet;
 
-            return response()->json([
-                "data" => $data,
-                "success" => true,
-                "message" => "Session success"
-            ]);
+                $data = new \stdClass;
+                $data->user_name = $user->name;
+                $data->credit = $wallet ? ($wallet->balance + $wallet->balance_bonus) : 0;
+                $data->num_line = $settingGame['num_line'];
+                $data->line_num = $settingGame['line_num'];
+                $data->bet_amount = $settingGame['bet_amount'];
+                $data->free_num = $settingGame['free_num'];
+                $data->free_total = $settingGame['free_total'];
+                $data->free_amount = $settingGame['free_amount'];
+                $data->free_multi = $settingGame['free_multi'];
+                $data->freespin_mode = $settingGame['freespin_mode'];
+                $data->multiple_list = $multipleList;
+                $data->credit_line = $settingGame['credit_line'];
+                $data->buy_feature = $settingGame['buy_feature'];
+                $data->buy_max = $settingGame['buy_max'];
+                $data->feature = $feature;
+                $data->total_way = $settingGame['total_way'];
+                $data->multiply = $settingGame['multiply'];
+                $data->icon_data = $iconData;
+                $data->active_lines = $activeLines;
+                $data->drop_line = $dropLine;
+                $data->currency_prefix = $setting->prefix;
+                $data->currency_suffix = '';
+                $data->currency_thousand = '.';
+                $data->currency_decimal = ',';
+                $data->bet_size_list = $betSizeList;
+
+                $data->previous_session = $settingGame['previous_session'];
+                $data->game_state = $settingGame['game_state'];
+                $data->feature_result = $featureResult;
+
+                return response()->json([
+                    'data' => $data,
+                    'success' => true,
+                    'message' => 'Session success',
+                ]);
+            }
+
+            return response()->json([], 400);
+        } catch (\Throwable $e) {
+            \Log::error('SessionStructure error: '.$e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Erro interno'], 500);
         }
-
-        return response()->json([], 400);
     }
 
-
     /**
-     * @dev @victormsalatiel - Não comprem código roubado
-     * @param string $token
-     * @param array $settingGame
-     * @param array $pull
-     * @param array $dataLose
-     * @param array $dataDemo
-     * @param array $dataWin
      * @return JsonResponse
      */
     public static function SpinStructure(string $token, array $settingGame, array $pull, array $dataLose, array $dataDemo, array $dataWin, array $dataBonus)
     {
-        $tokenOpen = \Helper::DecToken($token);
+        try {
+            $tokenOpen = \Helper::DecToken($token);
 
-        if(isset($tokenOpen['status']) && $tokenOpen['status']) {
-            $game               = GameExclusive::whereActive(1)->where('uuid', $tokenOpen['game'])->first();
-            $user               = User::find($tokenOpen['id']);
-            $wallet             = Wallet::where('user_id', $tokenOpen['id'])->first();
+            if (! (isset($tokenOpen['status']) && $tokenOpen['status'])) {
+                return response()->json(['success' => false, 'message' => 'Token inválido'], 401);
+            }
 
-            $cpl                = intval($settingGame['cpl']);
-            $amount             = floatval($settingGame['betamount']);
-            $numline            = intval($settingGame['num_line']);
-            $bet                = $amount * $cpl * $numline;
-            $betInitial         = $bet;
+            $userId = (int) $tokenOpen['sub'];
+            $gameUuid = $tokenOpen['game'] ?? '';
 
-            define("SLOTINCONS", 0);
-            define("ACTIVEICONS", 1);
-            define("ACTIVELINES", 2);
-            define("DROPLINEDATA", 3);
-            define("MULTIPLYCOUNT", 4);
-            define("PAYOUT", 5);
+            $game = GameExclusive::whereActive(1)->where('uuid', $gameUuid)->first();
+            if (! $game) {
+                return response()->json(['success' => false, 'message' => 'Jogo não encontrado'], 404);
+            }
 
-            $loseResults        = $dataLose;
-            $demoWinResults     = $dataDemo;
-            $winResults         = $dataWin;
+            $cpl = intval($settingGame['cpl']);
+            $amount = floatval($settingGame['betamount']);
+            $numline = intval($settingGame['num_line']);
+            $bet = $amount * $cpl * $numline;
 
-            shuffle($loseResults);
-            shuffle($demoWinResults);
-            shuffle($winResults);
+            if ($bet <= 0) {
+                return response()->json(['success' => false, 'message' => 'Aposta inválida'], 422);
+            }
 
+            $allowedBets = $game->bet_size_list ?? [];
+            if (! empty($allowedBets) && ! in_array((string) $amount, array_map('strval', $allowedBets), true)) {
+                return response()->json(['success' => false, 'message' => 'Valor de aposta não permitido'], 422);
+            }
+
+            $loseResults = $dataLose;
+            $demoWinResults = $dataDemo;
+            $winResults = $dataWin;
+
+            self::secureShuffle($loseResults);
+            self::secureShuffle($demoWinResults);
+            self::secureShuffle($winResults);
+
+            $user = User::find($userId);
+            if (! $user) {
+                return response()->json(['error' => 'Usuário não encontrado'], 404);
+            }
             if ($user->is_demo_agent) {
                 $winResults = array_merge($winResults, $demoWinResults);
                 $loseLength = $game->influencer_loseLength;
-                $winLength  = $game->influencer_winLength;
+                $winLength = $game->influencer_winLength;
             } else {
                 $winLength = $game->winLength;
                 $loseLength = $game->loseLength;
@@ -126,96 +155,126 @@ trait PrivateGamesTrait
             $loseResults = array_slice($loseResults, 0, $loseLength);
 
             $possibleResults = array_merge($winResults, $loseResults);
-            shuffle($possibleResults);
+            self::secureShuffle($possibleResults);
             $result = $possibleResults[0];
 
-            $changeBonus = 'balance';
+            $winAmount = $cpl * $amount * $result[self::PAYOUT];
 
-            if ($wallet->balance + $wallet->balance_bonus < $bet) {
-                return response()->json("Insuficient balances", 400);
-            }
-            else {
+            $finalBalance = DB::transaction(function () use ($userId, $bet, $winAmount, $user, $game) {
+                $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->first();
+
+                if (! $wallet) {
+                    return null;
+                }
+
+                $totalAvailable = $wallet->balance + $wallet->balance_bonus;
+                if ($totalAvailable < $bet) {
+                    return -1;
+                }
+
                 if ($wallet->balance >= $bet) {
                     $wallet->decrement('balance', $bet);
                 } else {
-                    $changeBonus = 'balance_bonus';
-
+                    $fromBonus = $bet - $wallet->balance;
                     $wallet->update(['balance' => 0]);
-                    $wallet->decrement('balance_bonus', $bet);
+                    $wallet->decrement('balance_bonus', $fromBonus);
                 }
 
                 $wallet->increment('total_bet', $bet);
+
+                if ($winAmount > 0) {
+                    $wallet->increment('balance', $winAmount);
+                }
+
+                \Helper::generateGameHistory($user, $winAmount == 0 ? 'loss' : 'win', $winAmount, $bet, $game->name, $game->uuid, 'balance', 'originals');
+
+                CommissionTrait::processAffiliateCommission($user, $bet);
+
+                return $wallet->balance + $wallet->balance_bonus;
+            });
+
+            if ($finalBalance === null) {
+                return response()->json(['success' => false, 'message' => 'Carteira não encontrada'], 404);
             }
 
-            $winAmount = $cpl * $amount * $result[PAYOUT]; // valor do premio
+            if ($finalBalance === -1) {
+                return response()->json(['success' => false, 'message' => 'Saldo insuficiente'], 400);
+            }
 
-            $result[ACTIVELINES][0]["win_amount"] = $winAmount;
+            $result[self::ACTIVELINES][0]['win_amount'] = $winAmount;
 
-            /// atualiza os ganhos da vitoria
-            $wallet->increment('balance', $winAmount);
+            $pull['WinAmount'] = $winAmount;
+            $pull['WinOnDrop'] = $winAmount;
 
-
-            $pull['WinAmount']      = $winAmount;
-            $pull['WinOnDrop']      = $winAmount;
-
-            $pull['SlotIcons']      = $result[0];
-            $pull['ActiveIcons']    = $result[1];
-            $pull['ActiveLines']    = $result[2];
-            $pull['DropLineData']   = $result[3];
+            $pull['SlotIcons'] = $result[0];
+            $pull['ActiveIcons'] = $result[1];
+            $pull['ActiveLines'] = $result[2];
+            $pull['DropLineData'] = $result[3];
 
             $data = [
-                "credit"            => ($wallet->balance + $wallet->balance_bonus),
-                "freemode"          => $settingGame['freemode'] ?? false,
-                "jackpot"           => $settingGame['jackpot'],
-                "free_spin"         => $settingGame['free_spin'],
-                "free_num"          => $settingGame['free_num'],
-                "scaler"            => $settingGame['scaler'],
-                "num_line"          => $settingGame['num_line'],
-                "cpl"               => $cpl,
-                "betamount"         => $amount,
-                "bet_amount"        => $bet,
-                "pull"              => $pull
+                'credit' => $finalBalance,
+                'freemode' => $settingGame['freemode'] ?? false,
+                'jackpot' => $settingGame['jackpot'],
+                'free_spin' => $settingGame['free_spin'],
+                'free_num' => $settingGame['free_num'],
+                'scaler' => $settingGame['scaler'],
+                'num_line' => $settingGame['num_line'],
+                'cpl' => $cpl,
+                'betamount' => $amount,
+                'bet_amount' => $bet,
+                'pull' => $pull,
             ];
 
-            \Helper::generateGameHistory($user, $winAmount == 0 ? 'loss' : 'win', $winAmount, $betInitial, $game->name, $game->uuid, $changeBonus, 'originals');
-
-            \App\Traits\Affiliates\CommissionTrait::processAffiliateCommission($user, $betInitial);
-
             return response()->json([
-                "data" => $data,
-                "success" => true,
-                "message" => "Spin success"
+                'data' => $data,
+                'success' => true,
+                'message' => 'Spin success',
             ]);
+        } catch (\Throwable $e) {
+            \Log::error('SpinStructure error: '.$e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Erro interno'], 500);
         }
-
-        return response()->json([], 400);
     }
 
     /**
-     * @dev @victormsalatiel - Não comprem código roubado
-     * @param $request
-     * @param $token
      * @return JsonResponse|void
      */
-    public static function FreeNumStructure($request, $token, $freeSpin, $multiples)
+    public static function FreeNumStructure($request, $token, $freeSpin, $multiples = [])
     {
-        $index      = $request->index ?? 0;
-        $tokenOpen  = \Helper::DecToken($token);
-        $game		= GameExclusive::whereActive(1)->where('uuid', $tokenOpen['game'])->first();
+        try {
+            $index = $request->index ?? 0;
+            $tokenOpen = \Helper::DecToken($token);
 
-        if(isset($tokenOpen['status']) && $tokenOpen['status']) {
-            session(['free_num_' . $game->uuid => $freeSpin[$index]]); // quantide de rodadas gratis
-            session(['free_num_last_' . $game->uuid => $freeSpin[$index]]); // quantide de rodadas da ultima rodada grátis
-            session(['multiples_' . $game->uuid => $multiples[$index] ?? 0]);
-            session(['freemode_' . $game->uuid => true]); // ativa o modo freemode
+            if (! (isset($tokenOpen['status']) && $tokenOpen['status'])) {
+                return response()->json(['success' => false, 'message' => 'Token inválido'], 401);
+            }
+
+            $gameUuid = $tokenOpen['game'] ?? '';
+            $game = GameExclusive::whereActive(1)->where('uuid', $gameUuid)->first();
+
+            if (! $game) {
+                return response()->json(['success' => false, 'message' => 'Jogo não encontrado'], 404);
+            }
+
+            if (! isset($freeSpin[$index])) {
+                return response()->json(['success' => false, 'message' => 'Rodada grátis inválida'], 422);
+            }
+
+            session(['free_num_'.$game->uuid => $freeSpin[$index]]);
+            session(['free_num_last_'.$game->uuid => $freeSpin[$index]]);
+            session(['multiples_'.$game->uuid => $multiples[$index] ?? 0]);
+            session(['freemode_'.$game->uuid => true]);
 
             return response()->json([
-                "success" => true,
-                "data" => [
-                    "free_num" => $freeSpin[$index]
+                'success' => true,
+                'data' => [
+                    'free_num' => $freeSpin[$index],
                 ],
-                "message" => "Change success"
+                'message' => 'Change success',
             ]);
+        } catch (\Throwable $e) {
+            \Log::error('FreeNumStructure error: '.$e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Erro interno'], 500);
         }
     }
 }

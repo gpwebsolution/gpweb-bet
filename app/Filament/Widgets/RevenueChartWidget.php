@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\DB;
 class RevenueChartWidget extends ChartWidget
 {
     protected ?string $heading = 'Receita - Últimos 30 Dias';
-    protected int | string | array $columnSpan = 'full';
+
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {

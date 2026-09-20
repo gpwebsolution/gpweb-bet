@@ -5,7 +5,6 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\GameResource\Pages;
 use App\Models\Game;
 use BackedEnum;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
