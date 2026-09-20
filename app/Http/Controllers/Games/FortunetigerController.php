@@ -39,9 +39,7 @@ class FortunetigerController extends Controller
             'game_state' => '',
         ];
 
-        $multipleList = [
-
-        ];
+        $multipleList = [];
 
         $iconData = [
             'Symbol_2',
@@ -125,9 +123,7 @@ class FortunetigerController extends Controller
                 '[WIN] line 1: 4[Symbol_5] payout: 25 (*multipy:1) x 10 x 10 => 2500',
             ],
             'DropLine' => 3,
-            'MultipleList' => [
-
-            ],
+            'MultipleList' => [],
         ];
 
         return self::SpinStructure($token, $settingGame, $pull, FortuneTigerLose::getLose(), FortuneTigerDemo::getDemo(), FortuneTigerWin::getWin(), FortuneTigerBonus::getBonus());

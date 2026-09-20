@@ -32,6 +32,61 @@ trait PrivateGamesTrait
         }
     }
 
+    private static function isFortuneTiger(string $gameUuid): bool
+    {
+        $game = GameExclusive::whereActive(1)->where('uuid', $gameUuid)->first();
+        return $game && stripos($game->name, 'fortune') !== false && stripos($game->name, 'tiger') !== false;
+    }
+
+    private static function generateFortuneTigerBonusGrid(string $bonusSymbol, array $heldPositions): array
+    {
+        $wildSymbol = 'Symbol_6';
+        $newGrid = [];
+        $newHeld = $heldPositions;
+        $hasNewMatch = false;
+
+        foreach (range(0, 8) as $pos) {
+            if (in_array($pos, $heldPositions)) {
+                $newGrid[$pos] = $bonusSymbol;
+            } else {
+                if (rand(1, 100) <= 45) {
+                    $newGrid[$pos] = (rand(1, 100) <= 25) ? $wildSymbol : $bonusSymbol;
+                    $newHeld[] = $pos;
+                    $hasNewMatch = true;
+                } else {
+                    $others = ['Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_7', 'Symbol_8'];
+                    $others = array_values(array_diff($others, [$bonusSymbol]));
+                    $newGrid[$pos] = $others[array_rand($others)];
+                }
+            }
+        }
+
+        return [$newGrid, $newHeld, $hasNewMatch];
+    }
+
+    private static function calculateFortuneTigerBonusPayout(string $bonusSymbol, int $matchingCount, bool $isFullScreen): int
+    {
+        $symbolPayouts = [
+            'Symbol_0' => 250,
+            'Symbol_1' => 100,
+            'Symbol_2' => 25,
+            'Symbol_3' => 10,
+            'Symbol_4' => 8,
+            'Symbol_5' => 5,
+            'Symbol_7' => 4,
+            'Symbol_8' => 3,
+        ];
+
+        $basePayout = $symbolPayouts[$bonusSymbol] ?? 5;
+        $payout = intval(($matchingCount / 3) * $basePayout);
+
+        if ($isFullScreen) {
+            $payout *= 10;
+        }
+
+        return $payout;
+    }
+
     /**
      * @return JsonResponse
      */
@@ -138,58 +193,58 @@ trait PrivateGamesTrait
             $isFreeMode = session('freemode_'.$gameUuid, false);
             $freeNumRemaining = session('free_num_'.$gameUuid, 0);
 
-            $loseResults = $dataLose;
-            $demoWinResults = $dataDemo;
-            $winResults = $dataWin;
+            $isFortuneTiger = self::isFortuneTiger($gameUuid);
+            $bonusActive = $isFortuneTiger && session('bonus_active_'.$gameUuid, false);
 
-            self::secureShuffle($loseResults);
-            self::secureShuffle($demoWinResults);
-            self::secureShuffle($dataBonus);
+            $isBonusTrigger = false;
+            $featureSymbol = '';
+            $winAmount = 0;
+            $result = null;
 
-            if ($user->is_demo_agent) {
-                $winResults = array_merge($winResults, $demoWinResults, $dataBonus);
-                $loseLength = $game->influencer_loseLength;
-                $winLength = $game->influencer_winLength;
-            } else {
-                $winResults = array_merge($winResults, $dataBonus);
-                $winLength = $game->winLength;
-                $loseLength = $game->loseLength;
-            }
+            if ($bonusActive) {
+                $bonusSymbol = session('bonus_symbol_'.$gameUuid);
+                $heldPositions = session('bonus_held_'.$gameUuid, []);
+                $respinsLeft = session('bonus_respins_'.$gameUuid, 7);
 
-            self::secureShuffle($winResults);
+                [$newGrid, $newHeld, $hasNewMatch] = self::generateFortuneTigerBonusGrid($bonusSymbol, $heldPositions);
 
-            $winResults = array_slice($winResults, 0, $winLength);
-            $loseResults = array_slice($loseResults, 0, $loseLength);
+                $isFullScreen = (count($newHeld) >= 9);
+                $bonusEnds = ! $hasNewMatch || $isFullScreen || $respinsLeft <= 0;
 
-            $possibleResults = array_merge($winResults, $loseResults);
-            self::secureShuffle($possibleResults);
-            $result = $possibleResults[0];
+                $payout = self::calculateFortuneTigerBonusPayout($bonusSymbol, count($newHeld), $isFullScreen);
 
-            // Detect scatter (Symbol_6) for bonus trigger
-            $grid = $result[0];
-            $scatterCount = 0;
-            foreach ($grid as $symbol) {
-                if ($symbol === 'Symbol_6') {
-                    $scatterCount++;
+                $result = [
+                    $newGrid,
+                    array_map(fn ($p) => $p + 1, $newHeld),
+                    [
+                        [
+                            'index' => 0,
+                            'name' => $bonusSymbol,
+                            'combine' => count($newHeld),
+                            'way_243' => 1,
+                            'payout' => $payout,
+                            'multiply' => 0,
+                            'win_amount' => 0,
+                            'active_icon' => array_map(fn ($p) => $p + 1, $newHeld),
+                        ],
+                    ],
+                    [],
+                    0,
+                    $payout,
+                ];
+
+                $winAmount = $payout * $cpl * $amount;
+
+                if ($bonusEnds) {
+                    session(['bonus_active_'.$gameUuid => false]);
+                    session(['bonus_held_'.$gameUuid => []]);
+                    session(['bonus_respins_'.$gameUuid => 0]);
+                    $bonusActive = false;
+                } else {
+                    session(['bonus_held_'.$gameUuid => $newHeld]);
+                    session(['bonus_respins_'.$gameUuid => $respinsLeft - 1]);
                 }
-            }
-            $isBonusTrigger = ($scatterCount >= 3);
 
-            // Check if all 9 positions have the same symbol (full screen)
-            $uniqueSymbols = array_unique($grid);
-            $isFullScreen = (count($uniqueSymbols) === 1 && ! in_array('Symbol_6', $uniqueSymbols));
-
-            $payout = $result[self::PAYOUT];
-
-            // Apply 10x multiplier only for full screen wins (all 9 same symbol)
-            if ($isFullScreen) {
-                $payout = $payout * 10;
-            }
-
-            $winAmount = $cpl * $amount * $payout;
-
-            if ($isFreeMode && $freeNumRemaining > 0) {
-                // During free spins: don't deduct bet, just credit wins
                 $finalBalance = DB::transaction(function () use ($userId, $winAmount, $user, $game) {
                     $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->first();
 
@@ -205,50 +260,155 @@ trait PrivateGamesTrait
 
                     return $wallet->balance + $wallet->balance_bonus;
                 });
-
-                // Decrement free spin count
-                $freeNumRemaining--;
-                if ($freeNumRemaining <= 0) {
-                    session(['freemode_'.$gameUuid => false]);
-                    session(['free_num_'.$gameUuid => 0]);
-                    $isFreeMode = false;
-                } else {
-                    session(['free_num_'.$gameUuid => $freeNumRemaining]);
-                }
             } else {
-                // Normal spin: deduct bet, credit wins
-                $finalBalance = DB::transaction(function () use ($userId, $bet, $winAmount, $user, $game) {
-                    $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->first();
+                $loseResults = $dataLose;
+                $demoWinResults = $dataDemo;
+                $winResults = $dataWin;
 
-                    if (! $wallet) {
-                        return null;
+                self::secureShuffle($loseResults);
+                self::secureShuffle($demoWinResults);
+                self::secureShuffle($dataBonus);
+
+                if ($user->is_demo_agent) {
+                    $winResults = array_merge($winResults, $demoWinResults, $dataBonus);
+                    $loseLength = $game->influencer_loseLength;
+                    $winLength = $game->influencer_winLength;
+                } else {
+                    $winResults = array_merge($winResults, $dataBonus);
+                    $winLength = $game->winLength;
+                    $loseLength = $game->loseLength;
+                }
+
+                self::secureShuffle($winResults);
+
+                $winResults = array_slice($winResults, 0, $winLength);
+                $loseResults = array_slice($loseResults, 0, $loseLength);
+
+                $possibleResults = array_merge($winResults, $loseResults);
+                self::secureShuffle($possibleResults);
+                $result = $possibleResults[0];
+
+                $grid = $result[0];
+
+                if ($isFortuneTiger && ! $isFreeMode) {
+                    $triggerChance = rand(1, 1000);
+                    if ($triggerChance <= 80) {
+                        $isBonusTrigger = true;
+
+                        $payingSymbols = ['Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_7', 'Symbol_8'];
+                        $bonusSymbol = $payingSymbols[array_rand($payingSymbols)];
+                        $featureSymbol = $bonusSymbol;
+
+                        $initialCount = rand(2, 5);
+                        $positions = range(0, 8);
+                        self::secureShuffle($positions);
+                        $heldPositions = array_slice($positions, 0, $initialCount);
+
+                        [$bonusGrid, $finalHeld, $dummy] = self::generateFortuneTigerBonusGrid($bonusSymbol, $heldPositions);
+
+                        $payout = self::calculateFortuneTigerBonusPayout($bonusSymbol, count($finalHeld), false);
+
+                        $result = [
+                            $bonusGrid,
+                            array_map(fn ($p) => $p + 1, $finalHeld),
+                            [
+                                [
+                                    'index' => 0,
+                                    'name' => $bonusSymbol,
+                                    'combine' => count($finalHeld),
+                                    'way_243' => 1,
+                                    'payout' => $payout,
+                                    'multiply' => 0,
+                                    'win_amount' => 0,
+                                    'active_icon' => array_map(fn ($p) => $p + 1, $finalHeld),
+                                ],
+                            ],
+                            [],
+                            0,
+                            $payout,
+                        ];
+
+                        $winAmount = $payout * $cpl * $amount;
+
+                        session(['bonus_active_'.$gameUuid => true]);
+                        session(['bonus_symbol_'.$gameUuid => $bonusSymbol]);
+                        session(['bonus_held_'.$gameUuid => $finalHeld]);
+                        session(['bonus_respins_'.$gameUuid => 7]);
+                    }
+                }
+
+                if (! $isBonusTrigger) {
+                    $uniqueSymbols = array_unique($grid);
+                    $isFullScreen = (count($uniqueSymbols) === 1 && ! in_array('Symbol_6', $uniqueSymbols));
+
+                    $payout = $result[self::PAYOUT];
+
+                    if ($isFullScreen) {
+                        $payout = $payout * 10;
                     }
 
-                    $totalAvailable = $wallet->balance + $wallet->balance_bonus;
-                    if ($totalAvailable < $bet) {
-                        return -1;
-                    }
+                    $winAmount = $cpl * $amount * $payout;
+                }
 
-                    if ($wallet->balance >= $bet) {
-                        $wallet->decrement('balance', $bet);
+                if ($isFreeMode && $freeNumRemaining > 0) {
+                    $finalBalance = DB::transaction(function () use ($userId, $winAmount, $user, $game) {
+                        $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->first();
+
+                        if (! $wallet) {
+                            return null;
+                        }
+
+                        if ($winAmount > 0) {
+                            $wallet->increment('balance', $winAmount);
+                        }
+
+                        \Helper::generateGameHistory($user, $winAmount == 0 ? 'loss' : 'win', $winAmount, 0, $game->name, $game->uuid, 'balance', 'originals');
+
+                        return $wallet->balance + $wallet->balance_bonus;
+                    });
+
+                    $freeNumRemaining--;
+                    if ($freeNumRemaining <= 0) {
+                        session(['freemode_'.$gameUuid => false]);
+                        session(['free_num_'.$gameUuid => 0]);
+                        $isFreeMode = false;
                     } else {
-                        $fromBonus = $bet - $wallet->balance;
-                        $wallet->update(['balance' => 0]);
-                        $wallet->decrement('balance_bonus', $fromBonus);
+                        session(['free_num_'.$gameUuid => $freeNumRemaining]);
                     }
+                } else {
+                    $finalBalance = DB::transaction(function () use ($userId, $bet, $winAmount, $user, $game) {
+                        $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->first();
 
-                    $wallet->increment('total_bet', $bet);
+                        if (! $wallet) {
+                            return null;
+                        }
 
-                    if ($winAmount > 0) {
-                        $wallet->increment('balance', $winAmount);
-                    }
+                        $totalAvailable = $wallet->balance + $wallet->balance_bonus;
+                        if ($totalAvailable < $bet) {
+                            return -1;
+                        }
 
-                    \Helper::generateGameHistory($user, $winAmount == 0 ? 'loss' : 'win', $winAmount, $bet, $game->name, $game->uuid, 'balance', 'originals');
+                        if ($wallet->balance >= $bet) {
+                            $wallet->decrement('balance', $bet);
+                        } else {
+                            $fromBonus = $bet - $wallet->balance;
+                            $wallet->update(['balance' => 0]);
+                            $wallet->decrement('balance_bonus', $fromBonus);
+                        }
 
-                    CommissionTrait::processAffiliateCommission($user, $bet);
+                        $wallet->increment('total_bet', $bet);
 
-                    return $wallet->balance + $wallet->balance_bonus;
-                });
+                        if ($winAmount > 0) {
+                            $wallet->increment('balance', $winAmount);
+                        }
+
+                        \Helper::generateGameHistory($user, $winAmount == 0 ? 'loss' : 'win', $winAmount, $bet, $game->name, $game->uuid, 'balance', 'originals');
+
+                        CommissionTrait::processAffiliateCommission($user, $bet);
+
+                        return $wallet->balance + $wallet->balance_bonus;
+                    });
+                }
             }
 
             if ($finalBalance === null) {
@@ -271,15 +431,16 @@ trait PrivateGamesTrait
 
             if ($isBonusTrigger && ! $isFreeMode) {
                 $pull['HasScatter'] = true;
-                $pull['CountScatter'] = $scatterCount;
+                $pull['CountScatter'] = 0;
             }
 
             $data = [
                 'credit' => $finalBalance,
-                'freemode' => ($isBonusTrigger && ! $isFreeMode) ? true : $isFreeMode,
+                'freemode' => $bonusActive || $isFreeMode,
                 'jackpot' => $settingGame['jackpot'],
-                'free_spin' => ($isBonusTrigger && ! $isFreeMode) ? 1 : 0,
-                'free_num' => ($isBonusTrigger && ! $isFreeMode) ? 8 : $freeNumRemaining,
+                'free_spin' => $isBonusTrigger ? 1 : ($bonusActive ? 1 : 0),
+                'free_num' => $bonusActive ? session('bonus_respins_'.$gameUuid, 0) : ($isBonusTrigger ? 7 : $freeNumRemaining),
+                'feature_symbol' => $bonusActive ? session('bonus_symbol_'.$gameUuid, '') : $featureSymbol,
                 'scaler' => $settingGame['scaler'],
                 'num_line' => $settingGame['num_line'],
                 'cpl' => $cpl,
