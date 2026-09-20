@@ -18,8 +18,8 @@ return [
     'gn_url' => $baseUrl . 'v2/gn/',
     'oauth_url' => $baseUrl . 'oauth/token',
 
-    'cert_path' => env('EFI_CERT_PATH') ?: storage_path('app/cert/certificado.pem'),
-    'key_path' => env('EFI_KEY_PATH') ?: storage_path('app/cert/chave.pem'),
+    'cert_path' => storage_path('app/cert/certificado.pem'),
+    'key_path' => storage_path('app/cert/chave.pem'),
 
     'sandbox' => $isSandbox,
 

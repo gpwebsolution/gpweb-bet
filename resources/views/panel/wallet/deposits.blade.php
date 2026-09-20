@@ -1,13 +1,12 @@
 @extends('layouts.web')
 
 @section('content')
-    <div class="container-fluid">
-        @include('includes.navbar_top')
-        @include('includes.navbar_left')
+    @include('includes.navbar_top')
+    @include('includes.navbar_left')
 
-        <div class="page__content">
-            <br>
-            <div class="container">
+    <div class="page__content">
+        <br>
+        <div class="container">
                 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
                     <h4 class="mb-0 fw-bold">
                         <i class="fa-regular fa-circle-down me-2 text-success"></i>HISTÓRICO DE DEPÓSITOS

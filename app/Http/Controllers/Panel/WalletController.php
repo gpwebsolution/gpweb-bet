@@ -35,7 +35,7 @@ class WalletController extends Controller
         if ($filterGame !== 'all') {
             $query->where('game_id', (int) $filterGame);
         }
-        $query->applyDateFilter($filterDate, $searchDate);
+        self::applyDateFilterToQuery($query, $filterDate, $searchDate);
 
         $sessions = $query->latest()->paginate(10);
         $games = Game::where('active', 1)->get();
@@ -52,7 +52,7 @@ class WalletController extends Controller
         $searchDate = $request->get('search_date', '');
         $query = Saque::whereUserId(auth()->id());
 
-        $query->applyDateFilter($filter, $searchDate);
+        self::applyDateFilterToQuery($query, $filter, $searchDate);
 
         $saques = $query->latest()->paginate(10);
         return view('panel.wallet.saque', compact(['saques', 'filter', 'searchDate']));
@@ -67,7 +67,7 @@ class WalletController extends Controller
         $searchDate = $request->get('search_date', '');
         $query = EfiPayment::whereUserId(auth()->id());
 
-        $query->applyDateFilter($filter, $searchDate);
+        self::applyDateFilterToQuery($query, $filter, $searchDate);
 
         $deposits = $query->latest()->paginate(10);
         return view('panel.wallet.deposits', compact(['deposits', 'filter', 'searchDate']));

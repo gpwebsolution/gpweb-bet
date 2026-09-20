@@ -1,13 +1,12 @@
 @extends('layouts.web')
 
 @section('content')
-    <div class="container-fluid">
-        @include('includes.navbar_top')
-        @include('includes.navbar_left')
+    @include('includes.navbar_top')
+    @include('includes.navbar_left')
 
-        <div class="page__content">
-            <br>
-            <div class="@if(\Helper::getCustomLayout()['expanded_layout']) container-fluid @else container @endif">
+    <div class="page__content">
+        <br>
+        <div class="container">
                 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
                     <h4 class="mb-0 fw-bold">
                         <i class="fa-regular fa-circle-up me-2 text-warning"></i>HISTÓRICO DE SAQUES
@@ -100,7 +99,6 @@
                             {{ $saques->appends(['filter' => $filter ?? 'all', 'search_date' => $searchDate ?? ''])->links() }}
                         </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>

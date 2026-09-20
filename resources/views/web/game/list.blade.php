@@ -77,13 +77,12 @@
 @endpush
 
 @section('content')
-<div class="container-fluid">
     @include('includes.navbar_top')
     @include('includes.navbar_left')
 
     <div class="page__content">
         <br>
-        <div class="@if(\Helper::getCustomLayout()['expanded_layout']) container-fluid @else container @endif">
+        <div class="container">
 
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <h4 class="fw-bold mb-0">Todos os Jogos</h4>
@@ -120,5 +119,4 @@
             @endif
         </div>
     </div>
-</div>
 @endsection

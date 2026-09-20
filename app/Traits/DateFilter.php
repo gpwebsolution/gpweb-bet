@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 trait DateFilter
 {
-    public function scopeApplyDateFilter(Builder $query, string $filter, string $searchDate = ''): Builder
+    protected static function applyDateFilterToQuery(Builder $query, string $filter, string $searchDate = ''): Builder
     {
         if ($searchDate) {
             return $query->whereDate('created_at', $searchDate);

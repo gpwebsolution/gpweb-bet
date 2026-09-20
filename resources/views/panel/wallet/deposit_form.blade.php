@@ -1,13 +1,11 @@
 @extends('layouts.web')
 
 @section('content')
-    <div class="container-fluid">
-        @include('includes.navbar_top')
-        @include('includes.navbar_left')
+    @include('includes.navbar_top')
+    @include('includes.navbar_left')
 
-        <div class="page__content">
-            <br>
-            <div class="@if(\Helper::getCustomLayout()['expanded_layout']) container-fluid @else container @endif">
+    <div class="page__content">
+        <div class="container">
                 <div class="row">
                     <div class="col-lg-6 mx-auto">
                     <div class="deposit-card position-relative">
@@ -92,7 +90,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>

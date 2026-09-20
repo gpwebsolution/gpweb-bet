@@ -195,13 +195,12 @@
 @endpush
 
 @section('content')
-<div class="container-fluid">
     @include('includes.navbar_top')
     @include('includes.navbar_left')
 
     <div class="page__content">
         <br>
-        <div class="@if(\Helper::getCustomLayout()['expanded_layout']) container-fluid @else container @endif">
+        <div class="container">
 
             {{-- Horizontal nav: shows on mobile/tablet --}}
             <div class="d-lg-none provider-nav-horizontal">
@@ -275,7 +274,6 @@
 
         </div>
     </div>
-</div>
 @endsection
 
 @push('scripts')

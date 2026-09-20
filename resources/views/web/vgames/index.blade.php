@@ -29,17 +29,15 @@
 @endpush
 
 @section('content')
-    <div class="container-fluid">
-        @include('includes.navbar_top')
-        @include('includes.navbar_left')
+    @include('includes.navbar_top')
+    @include('includes.navbar_left')
 
-        <div class="page__content">
-            <div class="container">
+    <div class="page__content">
+        <div class="container">
                 <div class="d-flex align-items-center justify-content-between mb-4 mt-3">
                     <h4 class="fw-bold mb-0">Jogos</h4>
                 </div>
                 <p class="text-white-50">Nenhum jogo encontrado.</p>
-            </div>
         </div>
     </div>
 @endsection

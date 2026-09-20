@@ -19,13 +19,12 @@
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        @include('includes.navbar_top')
-        @include('includes.navbar_left')
+    @include('includes.navbar_top')
+    @include('includes.navbar_left')
 
-        <div class="page__content">
-            <br>
-            <div class="@if(\Helper::getCustomLayout()['expanded_layout']) container-fluid @else container @endif">
+    <div class="page__content">
+        <br>
+        <div class="container">
                 <div class="content-page">
                     <div class="text-center mb-5">
                         <div style="width: 72px; height: 72px; background: linear-gradient(135deg, var(--cor-principal), color-mix(in srgb, var(--cor-principal) 60%, #000)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
@@ -131,7 +130,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>

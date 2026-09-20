@@ -1,13 +1,12 @@
 @extends('layouts.web')
 
 @section('content')
-    <div class="container-fluid">
-        @include('includes.navbar_top')
-        @include('includes.navbar_left')
+    @include('includes.navbar_top')
+    @include('includes.navbar_left')
 
-        <div class="page__content">
-            <br>
-            <div class="@if(\Helper::getCustomLayout()['expanded_layout']) container-fluid @else container @endif">
+    <div class="page__content">
+        <br>
+        <div class="container">
                 <div class="d-flex align-items-center gap-3 mb-4">
                     <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--cor-principal), color-mix(in srgb, var(--cor-principal) 60%, #000)); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
                         <i class="fa-regular fa-bell" style="color: white; font-size: 1.25rem;"></i>

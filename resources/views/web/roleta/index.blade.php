@@ -270,12 +270,11 @@
 @endpush
 
 @section('content')
-<div class="container-fluid">
     @include('includes.navbar_top')
     @include('includes.navbar_left')
 
     <div class="page__content">
-        <div class="@if(\Helper::getCustomLayout()['expanded_layout']) container-fluid @else container @endif">
+        <div class="container">
             <div class="roleta-page">
                 <div class="roleta-card">
                     <div class="roleta-header">
@@ -341,7 +340,6 @@
             </div>
         </div>
     </div>
-</div>
 @endsection
 
 @push('scripts')
