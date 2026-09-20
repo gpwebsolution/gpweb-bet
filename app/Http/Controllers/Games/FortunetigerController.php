@@ -81,7 +81,12 @@ class FortunetigerController extends Controller
         ];
 
         $feature = [
-
+            'bigwin' => [
+                ['Big Win', 15],
+                ['Super Win', 25],
+                ['Mega Win', 50],
+                ['Super Mega Win', 100],
+            ],
         ];
 
         return self::SessionStructure($token, $settingGame, $iconData, $activeLines, $dropLine, $betSizeList, $multipleList, $feature);
@@ -134,11 +139,14 @@ class FortunetigerController extends Controller
     public function freenum(Request $request, $token)
     {
         $freeSpin = [
-            1 => 3,
-            2 => 4,
+            0 => 8,
+            1 => 7,
+            2 => 6,
             3 => 5,
-            4 => 6,
-            5 => 7,
+            4 => 4,
+            5 => 3,
+            6 => 2,
+            7 => 1,
         ];
 
         return self::FreeNumStructure($request, $token, $freeSpin);

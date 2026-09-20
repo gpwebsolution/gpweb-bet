@@ -130,26 +130,33 @@ trait PrivateGamesTrait
                 return response()->json(['success' => false, 'message' => 'Valor de aposta não permitido'], 422);
             }
 
+            $user = User::find($userId);
+            if (! $user) {
+                return response()->json(['error' => 'Usuário não encontrado'], 404);
+            }
+
+            $isFreeMode = session('freemode_'.$gameUuid, false);
+            $freeNumRemaining = session('free_num_'.$gameUuid, 0);
+
             $loseResults = $dataLose;
             $demoWinResults = $dataDemo;
             $winResults = $dataWin;
 
             self::secureShuffle($loseResults);
             self::secureShuffle($demoWinResults);
-            self::secureShuffle($winResults);
+            self::secureShuffle($dataBonus);
 
-            $user = User::find($userId);
-            if (! $user) {
-                return response()->json(['error' => 'Usuário não encontrado'], 404);
-            }
             if ($user->is_demo_agent) {
-                $winResults = array_merge($winResults, $demoWinResults);
+                $winResults = array_merge($winResults, $demoWinResults, $dataBonus);
                 $loseLength = $game->influencer_loseLength;
                 $winLength = $game->influencer_winLength;
             } else {
+                $winResults = array_merge($winResults, $dataBonus);
                 $winLength = $game->winLength;
                 $loseLength = $game->loseLength;
             }
+
+            self::secureShuffle($winResults);
 
             $winResults = array_slice($winResults, 0, $winLength);
             $loseResults = array_slice($loseResults, 0, $loseLength);
@@ -158,40 +165,91 @@ trait PrivateGamesTrait
             self::secureShuffle($possibleResults);
             $result = $possibleResults[0];
 
-            $winAmount = $cpl * $amount * $result[self::PAYOUT];
-
-            $finalBalance = DB::transaction(function () use ($userId, $bet, $winAmount, $user, $game) {
-                $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->first();
-
-                if (! $wallet) {
-                    return null;
+            // Detect scatter (Symbol_6) for bonus trigger
+            $grid = $result[0];
+            $scatterCount = 0;
+            foreach ($grid as $symbol) {
+                if ($symbol === 'Symbol_6') {
+                    $scatterCount++;
                 }
+            }
+            $isBonusTrigger = ($scatterCount >= 3);
 
-                $totalAvailable = $wallet->balance + $wallet->balance_bonus;
-                if ($totalAvailable < $bet) {
-                    return -1;
-                }
+            // Check if all 9 positions have the same symbol (full screen)
+            $uniqueSymbols = array_unique($grid);
+            $isFullScreen = (count($uniqueSymbols) === 1 && ! in_array('Symbol_6', $uniqueSymbols));
 
-                if ($wallet->balance >= $bet) {
-                    $wallet->decrement('balance', $bet);
+            $payout = $result[self::PAYOUT];
+
+            // Apply 10x multiplier only for full screen wins (all 9 same symbol)
+            if ($isFullScreen) {
+                $payout = $payout * 10;
+            }
+
+            $winAmount = $cpl * $amount * $payout;
+
+            if ($isFreeMode && $freeNumRemaining > 0) {
+                // During free spins: don't deduct bet, just credit wins
+                $finalBalance = DB::transaction(function () use ($userId, $winAmount, $user, $game) {
+                    $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->first();
+
+                    if (! $wallet) {
+                        return null;
+                    }
+
+                    if ($winAmount > 0) {
+                        $wallet->increment('balance', $winAmount);
+                    }
+
+                    \Helper::generateGameHistory($user, $winAmount == 0 ? 'loss' : 'win', $winAmount, 0, $game->name, $game->uuid, 'balance', 'originals');
+
+                    return $wallet->balance + $wallet->balance_bonus;
+                });
+
+                // Decrement free spin count
+                $freeNumRemaining--;
+                if ($freeNumRemaining <= 0) {
+                    session(['freemode_'.$gameUuid => false]);
+                    session(['free_num_'.$gameUuid => 0]);
+                    $isFreeMode = false;
                 } else {
-                    $fromBonus = $bet - $wallet->balance;
-                    $wallet->update(['balance' => 0]);
-                    $wallet->decrement('balance_bonus', $fromBonus);
+                    session(['free_num_'.$gameUuid => $freeNumRemaining]);
                 }
+            } else {
+                // Normal spin: deduct bet, credit wins
+                $finalBalance = DB::transaction(function () use ($userId, $bet, $winAmount, $user, $game) {
+                    $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->first();
 
-                $wallet->increment('total_bet', $bet);
+                    if (! $wallet) {
+                        return null;
+                    }
 
-                if ($winAmount > 0) {
-                    $wallet->increment('balance', $winAmount);
-                }
+                    $totalAvailable = $wallet->balance + $wallet->balance_bonus;
+                    if ($totalAvailable < $bet) {
+                        return -1;
+                    }
 
-                \Helper::generateGameHistory($user, $winAmount == 0 ? 'loss' : 'win', $winAmount, $bet, $game->name, $game->uuid, 'balance', 'originals');
+                    if ($wallet->balance >= $bet) {
+                        $wallet->decrement('balance', $bet);
+                    } else {
+                        $fromBonus = $bet - $wallet->balance;
+                        $wallet->update(['balance' => 0]);
+                        $wallet->decrement('balance_bonus', $fromBonus);
+                    }
 
-                CommissionTrait::processAffiliateCommission($user, $bet);
+                    $wallet->increment('total_bet', $bet);
 
-                return $wallet->balance + $wallet->balance_bonus;
-            });
+                    if ($winAmount > 0) {
+                        $wallet->increment('balance', $winAmount);
+                    }
+
+                    \Helper::generateGameHistory($user, $winAmount == 0 ? 'loss' : 'win', $winAmount, $bet, $game->name, $game->uuid, 'balance', 'originals');
+
+                    CommissionTrait::processAffiliateCommission($user, $bet);
+
+                    return $wallet->balance + $wallet->balance_bonus;
+                });
+            }
 
             if ($finalBalance === null) {
                 return response()->json(['success' => false, 'message' => 'Carteira não encontrada'], 404);
@@ -211,12 +269,17 @@ trait PrivateGamesTrait
             $pull['ActiveLines'] = $result[2];
             $pull['DropLineData'] = $result[3];
 
+            if ($isBonusTrigger && ! $isFreeMode) {
+                $pull['HasScatter'] = true;
+                $pull['CountScatter'] = $scatterCount;
+            }
+
             $data = [
                 'credit' => $finalBalance,
-                'freemode' => $settingGame['freemode'] ?? false,
+                'freemode' => ($isBonusTrigger && ! $isFreeMode) ? true : $isFreeMode,
                 'jackpot' => $settingGame['jackpot'],
-                'free_spin' => $settingGame['free_spin'],
-                'free_num' => $settingGame['free_num'],
+                'free_spin' => ($isBonusTrigger && ! $isFreeMode) ? 1 : 0,
+                'free_num' => ($isBonusTrigger && ! $isFreeMode) ? 8 : $freeNumRemaining,
                 'scaler' => $settingGame['scaler'],
                 'num_line' => $settingGame['num_line'],
                 'cpl' => $cpl,
